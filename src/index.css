@@ -5,18 +5,21 @@
   --color-bg: #f8f9fa;
   --color-surface: #ffffff;
   --color-primary: #1a365d;
-  /* Deep corporate blue */
   --color-primary-light: #2b6cb0;
   --color-secondary: #cba258;
-  /* Premium gold accent */
   --color-text: #2d3748;
   --color-text-muted: #718096;
   --color-border: #e2e8f0;
   --color-success: #38a169;
   --color-danger: #e53e3e;
 
-  /* Typography */
+  /* Typography - Light */
   --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-size-base: 1rem;
+  --font-letter-spacing: normal;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
 
   /* Shadows for depth */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -33,6 +36,39 @@
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-theme: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme='dark'] {
+  /* Premium Dark Theme Colors */
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-primary: #60a5fa;
+  /* Electric blue for dark mode visibility */
+  --color-primary-light: #93c5fd;
+  --color-secondary: #fbbf24;
+  /* Rich gold for contrast */
+  --color-text: #f1f5f9;
+  --color-text-muted: #94a3b8;
+  --color-border: #334155;
+  --color-success: #4ade80;
+  --color-danger: #f87171;
+
+  /* Typography - Dark (Optimized for visibility) */
+  --font-size-base: 1.05rem;
+  /* Slightly larger for dark mode */
+  --font-letter-spacing: 0.02em;
+  /* Wider tracking */
+  --font-weight-regular: 500;
+  /* Slightly bolder base weight */
+  --font-weight-medium: 600;
+  --font-weight-bold: 800;
+
+  /* Deep Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -43,6 +79,8 @@
 
 body {
   font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  letter-spacing: var(--font-letter-spacing);
   background-color: var(--color-bg);
   background-image: radial-gradient(circle at top right, rgba(203, 162, 88, 0.05), transparent 40%),
     radial-gradient(circle at bottom left, rgba(26, 54, 93, 0.05), transparent 40%);
@@ -51,16 +89,32 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  transition: background-color var(--transition-theme), color var(--transition-theme);
 }
 
 /* Glassmorphism utility */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--color-surface);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-glass);
   border-radius: var(--radius-lg);
+  transition: transform var(--transition-normal),
+    box-shadow var(--transition-normal),
+    background-color var(--transition-theme),
+    border-color var(--transition-theme),
+    color var(--transition-theme);
+}
+
+[data-theme='dark'] .glass-panel {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.animate-hover-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
 }
 
 .mobile-action-bar {
@@ -545,6 +599,10 @@ body {
 .panel {
   padding: 1rem 1.5rem;
   position: relative;
+  resize: both;
+  overflow: auto;
+  min-width: 200px;
+  min-height: 100px;
 }
 
 .panel-title {
@@ -677,7 +735,7 @@ body {
   top: 100%;
   left: 0;
   right: 0;
-  background: white;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
@@ -685,7 +743,35 @@ body {
   overflow-y: auto;
   margin-top: 4px;
   z-index: 1000;
-  /* Ensure it stays on top of everything */
+  border: 1px solid var(--color-border);
+}
+
+.suggestion-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-bottom: 1px solid var(--color-bg);
+  color: var(--color-text);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: var(--color-bg);
+}
+
+.suggestion-item .suggestion-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  margin-bottom: 2px;
+}
+
+.suggestion-item .suggestion-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
 /* Animations */
@@ -855,20 +941,64 @@ body {
 .sidebar-secondary {
   position: fixed;
   top: 0;
-  left: -320px;
+  left: 0;
   bottom: 0;
-  width: 320px;
+  width: var(--sidebar-width, 320px);
   background: white;
   z-index: 10001;
   box-shadow: 10px 0 50px rgba(0, 0, 0, 0.15);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-100%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.1s ease;
   display: flex;
   flex-direction: column;
 }
 
 .sidebar-secondary.open {
-  left: 0;
+  transform: translateX(0);
 }
+
+/* Consolidated positioning above */
+
+.sidebar-secondary.resizing {
+  transition: none !important;
+  user-select: none;
+}
+
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 10002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.sidebar-resizer:hover,
+.sidebar-secondary.resizing .sidebar-resizer {
+  background: rgba(43, 108, 176, 0.1);
+}
+
+.resizer-handle {
+  width: 2px;
+  height: 40px;
+  background: var(--color-border);
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.sidebar-resizer:hover .resizer-handle,
+.sidebar-secondary.resizing .resizer-handle {
+  background: var(--color-primary-light);
+  height: 60px;
+  width: 4px;
+}
+
 
 .sidebar-header {
   padding: 2.5rem 1.5rem 1.5rem;
@@ -1596,6 +1726,92 @@ body {
     transform: translateY(0);
     opacity: 1;
   }
+}
+
+/* --- ANIMATIONS --- */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stagger-1 {
+  animation-delay: 0.1s;
+}
+
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.stagger-4 {
+  animation-delay: 0.4s;
+}
+
+/* Theme Toggle Animations */
+.animate-in {
+  animation-duration: 0.5s;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.zoom-in {
+  animation-name: zoomIn;
+}
+
+@keyframes spinIn {
+  from {
+    opacity: 0;
+    transform: rotate(-90deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(0);
+  }
+}
+
+.spin-in-90 {
+  animation-name: spinIn;
 }
 
 @keyframes slideUpWelcome {

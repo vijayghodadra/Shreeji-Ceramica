@@ -63,16 +63,15 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                         placeholder="Search/Enter name"
                     />
                     {showSuggestions && history.length > 0 && (
-                        <div className="suggestions-dropdown" style={{ maxHeight: '150px' }}>
+                        <div className="suggestions-dropdown">
                             {history.filter(h => h.customerName.toLowerCase().includes(customer.customerName.toLowerCase())).map((h, i) => (
                                 <div
                                     key={i}
-                                    className="suggestion-item p-2 hover:bg-gray-50 cursor-pointer text-sm"
-                                    style={{ padding: '0.6rem', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
+                                    className="suggestion-item"
                                     onClick={() => handleSelectSuggestion(h)}
                                 >
-                                    <div className="font-bold">{h.customerName}</div>
-                                    <div className="text-muted text-xs">{h.phone} - {h.companyName}</div>
+                                    <div className="suggestion-name">{h.customerName}</div>
+                                    <div className="suggestion-meta">{h.phone} - {h.companyName}</div>
                                 </div>
                             ))}
                         </div>

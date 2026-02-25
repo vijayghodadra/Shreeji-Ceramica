@@ -1,7 +1,9 @@
 import { Send, MessageCircle, Download, Eye, Save } from 'lucide-react';
 import type { CustomerDetails, ProductDetails } from '../types';
-import { generatePDF } from '../utils/pdfGenerator';
+import { generatePDF, getPDFFile } from '../utils/pdfGenerator';
 import { formatCurrency, calculateQuoteTotals } from '../utils/calculations';
+import { uploadPDF } from '../utils/supabase';
+import { useState } from 'react';
 
 interface ActionPanelProps {
     customer: CustomerDetails;
@@ -32,33 +34,72 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
     onViewPDF,
     onSaveQuote
 }) => {
+    const [isSharing, setIsSharing] = useState(false);
 
     const handleGeneratePDF = async () => {
         const discValue = discountMode === 'COMMON' ? commonDiscountPercentage : globalDiscountAmount;
         await generatePDF(customer, products, discountMode, discValue, includeGST, gstPercentage);
     };
 
-    const generateMessageText = () => {
+    const generateMessageText = (includePdfLink: string | null = null) => {
         if (!customer.customerName) return '';
         const discValue = discountMode === 'COMMON' ? commonDiscountPercentage : globalDiscountAmount;
         const totals = calculateQuoteTotals(products, discountMode, discValue, includeGST, gstPercentage);
-        return `Hello ${customer.customerName},\n\nPlease find the quotation for your recent inquiry.\nTotal Amount: ${formatCurrency(totals.grandTotal)}\n\nThank you,\nShreeji Ceramica`;
+        let message = `*Quotation from Shreeji Ceramica*\n\nHello ${customer.customerName},\n\nPlease find the quotation for your recent inquiry.\n\n*Total Amount: ${formatCurrency(totals.grandTotal)}*\n\nThank you for choosing Shreeji Ceramica!`;
+        if (includePdfLink) {
+            // Using String.fromCodePoint for the Document emoji to avoid file encoding corruption
+            const pdfEmoji = String.fromCodePoint(0x1F4C4);
+            message += `\n\n${pdfEmoji} *View PDF Quotation:* \n${includePdfLink}`;
+        }
+        return message;
     };
 
-    const handleWhatsApp = () => {
-        const text = encodeURIComponent(generateMessageText());
-        let url = `https://wa.me/?text=${text}`;
-        if (customer.phone) {
-            // Remove any non-numeric characters for WA link
-            const phoneNum = customer.phone.replace(/\D/g, '');
-            url = `https://wa.me/${phoneNum}?text=${text}`;
+    const handleWhatsApp = async () => {
+        setIsSharing(true);
+        try {
+            const discValue = discountMode === 'COMMON' ? commonDiscountPercentage : globalDiscountAmount;
+
+            // 1. Prepare PDF
+            const cleanName = customer.customerName?.replace(/\s+/g, '_') || 'Draft';
+            const fileName = `${cleanName}_Quotation.pdf`;
+            const pdfFile = await getPDFFile(customer, products, discountMode, discValue, includeGST, gstPercentage);
+
+            // 2. Upload to Supabase for the PDF hosting
+            const publicUrl = await uploadPDF(pdfFile, fileName);
+
+            // 3. Construct the Production Vanity URL
+            // This will look like https://shreejiceramica.com/quotations/ClientName.pdf when deployed
+            // For now on your local computer, it will look like http://localhost:5173/quotations/ClientName.pdf
+            const vanityUrl = window.location.origin + "/quotations/" + fileName;
+
+            // 4. Construct Message using the Vanity URL
+            // We use the clean Vanity URL as requested. Note: WhatsApp preview cards require the domain to be publicly accessible.
+            const messageText = generateMessageText(publicUrl ? vanityUrl : null);
+
+            // 4. Construct WhatsApp Redirection
+            const rawPhone = customer.phone.replace(/\D/g, '');
+            const phoneNum = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
+            const encodedText = encodeURIComponent(messageText);
+
+            // Use wa.me for the most reliable direct opening + text pre-fill
+            const url = `https://wa.me/${phoneNum}?text=${encodedText}`;
+
+            // 6. Direct One-Click Redirect
+            window.open(url, '_blank');
+        } catch (error) {
+            console.error('Error sharing to WhatsApp:', error);
+            const text = generateMessageText();
+            let rawPhone = customer.phone.replace(/\D/g, '');
+            if (rawPhone.length === 10) rawPhone = '91' + rawPhone;
+            window.open(`https://wa.me/${rawPhone}?text=${encodeURIComponent(text)}`, '_blank');
+        } finally {
+            setIsSharing(false);
         }
-        window.open(url, '_blank');
     };
 
     const handleEmail = () => {
         const subject = encodeURIComponent(`Quotation from Shreeji Ceramica`);
-        const body = encodeURIComponent(generateMessageText());
+        const body = encodeURIComponent(generateMessageText().replace(/\*/g, '')); // Plain text for email
         window.location.href = `mailto:${customer.email}?subject=${subject}&body=${body}`;
     };
 
@@ -143,8 +184,13 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
                 <button className="btn btn-secondary" style={{ padding: '0.6rem 1.2rem' }} onClick={handleEmail}>
                     <Send size={16} /> Email
                 </button>
-                <button className="btn btn-accent" style={{ padding: '0.6rem 1.2rem' }} onClick={handleWhatsApp}>
-                    <MessageCircle size={16} /> WhatsApp
+                <button
+                    onClick={handleWhatsApp}
+                    disabled={isSharing}
+                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1 ${isSharing ? 'bg-gray-400 cursor-wait' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                >
+                    <MessageCircle size={18} className={isSharing ? 'animate-spin' : ''} />
+                    {isSharing ? 'Preparing PDF...' : 'WhatsApp'}
                 </button>
             </div>
 

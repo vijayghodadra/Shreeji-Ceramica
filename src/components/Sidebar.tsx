@@ -12,6 +12,42 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
     isOpen, activeBrand, onBrandSelect, currentView, onViewChange
 }) => {
+    const [width, setWidth] = React.useState(320);
+    const [isResizing, setIsResizing] = React.useState(false);
+    const sidebarRef = React.useRef<HTMLDivElement>(null);
+    const isResizingRef = React.useRef(false);
+
+    const startResizing = React.useCallback(() => {
+        setIsResizing(true);
+        isResizingRef.current = true;
+    }, []);
+
+    const stopResizing = React.useCallback(() => {
+        setIsResizing(false);
+        isResizingRef.current = false;
+    }, []);
+
+    const resize = React.useCallback(
+        (mouseMoveEvent: MouseEvent) => {
+            if (isResizingRef.current && sidebarRef.current) {
+                const newWidth = mouseMoveEvent.clientX;
+                if (newWidth > 200 && newWidth < 800) {
+                    setWidth(newWidth);
+                }
+            }
+        },
+        []
+    );
+
+    React.useEffect(() => {
+        window.addEventListener("mousemove", resize);
+        window.addEventListener("mouseup", stopResizing);
+        return () => {
+            window.removeEventListener("mousemove", resize);
+            window.removeEventListener("mouseup", stopResizing);
+        };
+    }, [resize, stopResizing]);
+
     return (
         <>
             {/* Overlay */}
@@ -20,7 +56,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => onBrandSelect(activeBrand)} /* Just to close */
             />
 
-            <aside className={`sidebar-secondary ${isOpen ? 'open' : ''}`}>
+            <aside
+                ref={sidebarRef}
+                className={`sidebar-secondary ${isOpen ? 'open' : ''} ${isResizing ? 'resizing' : ''}`}
+                style={{ '--sidebar-width': `${width}px` } as React.CSSProperties}
+            >
+                <div
+                    className="sidebar-resizer"
+                    onMouseDown={startResizing}
+                >
+                    <div className="resizer-handle" />
+                </div>
                 <div className="sidebar-header flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <Layers size={20} className="text-primary" />

@@ -36,6 +36,21 @@ function App() {
   const [globalDiscountAmount, setGlobalDiscountAmount] = useState<number>(0);
   const [currentQuoteNumber, setCurrentQuoteNumber] = useState<number | undefined>(undefined);
   const [currentQuoteId, setCurrentQuoteId] = useState<string>(crypto.randomUUID());
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('theme');
+    return (saved as 'light' | 'dark') || 'light';
+  });
+
+  useState(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  });
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   const handleCustomerChange = (field: keyof CustomerDetails, value: string) => {
     setCustomer(prev => ({ ...prev, [field]: value }));
@@ -127,8 +142,13 @@ function App() {
   }
 
   return (
-    <div className={`app-container ${activeBrand.toLowerCase()}`}>
-      <Header onMenuClick={() => setIsSidebarOpen(true)} activeBrand={activeBrand} />
+    <div className={`app-container ${activeBrand.toLowerCase()} theme-${theme}`}>
+      <Header
+        onMenuClick={() => setIsSidebarOpen(true)}
+        activeBrand={activeBrand}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
 
       <Sidebar
         isOpen={isSidebarOpen}
@@ -169,7 +189,7 @@ function App() {
         ) : (
           <>
             <div className="main-content">
-              <div className="relative z-30">
+              <div className="relative z-30 animate-fade-in-up stagger-1">
                 <CustomerForm
                   customer={customer}
                   onChange={handleCustomerChange}
@@ -180,7 +200,7 @@ function App() {
                 />
               </div>
 
-              <div className="relative z-20">
+              <div className="relative z-20 animate-fade-in-up stagger-2">
                 <ProductTable
                   products={products}
                   setProducts={setProducts}
@@ -190,7 +210,7 @@ function App() {
                 />
               </div>
 
-              <div className="relative z-10">
+              <div className="relative z-10 animate-fade-in-up stagger-3">
                 <ActionPanel
                   customer={customer}
                   products={products}
@@ -215,7 +235,7 @@ function App() {
                 gstPercentage={gstPercentage}
               />
 
-              <div className="panel glass-panel text-xs text-muted animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="panel glass-panel text-xs text-muted animate-fade-in-up stagger-4 animate-hover-lift">
                 <h3 className="font-bold text-primary mb-1">Quick Tips</h3>
                 <ul className="list-disc pl-4 space-y-0.5">
                   <li>Enter client details to save to history.</li>

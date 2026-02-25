@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/quotations/:path*",
+      "destination": "https://xmtprcnmslamfzjnuejc.supabase.co/storage/v1/object/public/quotations/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

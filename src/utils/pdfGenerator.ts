@@ -84,6 +84,24 @@ export const getPDFBlobUrl = async (
     return URL.createObjectURL(blob);
 };
 
+/**
+ * Returns a File object for sharing via Web Share API
+ */
+export const getPDFFile = async (
+    customer: CustomerDetails,
+    products: ProductDetails[],
+    discountMode: 'INDIVIDUAL' | 'COMMON' | 'GLOBAL',
+    discountValue: number,
+    includeGST: boolean,
+    gstPercentage: number = 18,
+    quoteNumber?: number
+): Promise<File> => {
+    const doc = await preparePDFDoc(customer, products, discountMode, discountValue, includeGST, gstPercentage, quoteNumber);
+    const blob = doc.output('blob');
+    const fileName = `Quotation_Shreeji_Ceramica_${customer.customerName?.replace(/\s+/g, '_') || Date.now()}.pdf`;
+    return new File([blob], fileName, { type: 'application/pdf' });
+};
+
 // --- Private Helper Functions ---
 
 const setupHeader = (

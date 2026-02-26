@@ -9,3 +9,7 @@ dist-ssr
 build
 npm-cache
 package-lock.json
+public/catalog/images_raw
+public/catalog/image_list.txt
+scripts/*.mjs
+public/extractor.html

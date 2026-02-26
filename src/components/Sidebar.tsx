@@ -7,10 +7,11 @@ interface SidebarProps {
     onBrandSelect: (brand: 'KOHLER' | 'AQUANT') => void;
     currentView: 'NEW_QUOTE' | 'SAVED_QUOTES';
     onViewChange: (view: 'NEW_QUOTE' | 'SAVED_QUOTES') => void;
+    onGoToDashboard: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-    isOpen, activeBrand, onBrandSelect, currentView, onViewChange
+    isOpen, activeBrand, onBrandSelect, currentView, onViewChange, onGoToDashboard
 }) => {
     const [width, setWidth] = React.useState(320);
     const [isResizing, setIsResizing] = React.useState(false);
@@ -85,6 +86,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="mb-6">
                         <div className="text-xs font-bold text-muted uppercase tracking-wider mb-3 px-1">Navigation</div>
                         <div className="vertical-stack">
+                            <button
+                                className={`nav-btn`}
+                                onClick={onGoToDashboard}
+                            >
+                                <Layers size={18} />
+                                <span>Dashboard</span>
+                            </button>
                             <button
                                 className={`nav-btn ${currentView === 'NEW_QUOTE' ? 'active' : ''}`}
                                 onClick={() => onViewChange('NEW_QUOTE')}

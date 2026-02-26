@@ -12,6 +12,7 @@ import { getPDFBlobUrl, generatePDF } from './utils/pdfGenerator';
 import { saveQuotation, getNextQuotationNumber } from './utils/storage';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { SavedQuotationsList } from './components/SavedQuotationsList';
+import { Dashboard } from './components/Dashboard';
 import type { DiscountMode } from './types';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
   const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [currentRoute, setCurrentRoute] = useState<'DASHBOARD' | 'BRAND_SELECTION' | 'APP'>('DASHBOARD');
   const [activeBrand, setActiveBrand] = useState<'KOHLER' | 'AQUANT' | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'NEW_QUOTE' | 'SAVED_QUOTES'>('NEW_QUOTE');
@@ -137,8 +139,23 @@ function App() {
     await generatePDF(customer, products, discountMode, discountMode === 'COMMON' ? commonDiscountPercentage : globalDiscountAmount, includeGST, gstPercentage, currentQuoteNumber);
   };
 
-  if (!activeBrand) {
-    return <WelcomeScreen onBrandSelect={setActiveBrand} />;
+  if (currentRoute === 'DASHBOARD') {
+    return (
+      <Dashboard
+        onStartConfigurator={() => setCurrentRoute('BRAND_SELECTION')}
+        onBrandSelect={(brand) => {
+          setActiveBrand(brand);
+          setCurrentRoute('APP');
+        }}
+      />
+    );
+  }
+
+  if (!activeBrand || currentRoute === 'BRAND_SELECTION') {
+    return <WelcomeScreen onBrandSelect={(brand) => {
+      setActiveBrand(brand);
+      setCurrentRoute('APP');
+    }} />;
   }
 
   return (
@@ -161,6 +178,10 @@ function App() {
         currentView={currentView}
         onViewChange={(view) => {
           setCurrentView(view);
+          setIsSidebarOpen(false);
+        }}
+        onGoToDashboard={() => {
+          setCurrentRoute('DASHBOARD');
           setIsSidebarOpen(false);
         }}
       />

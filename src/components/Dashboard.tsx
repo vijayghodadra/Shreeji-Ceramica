@@ -38,7 +38,7 @@ interface DashboardProps {
     onBrandSelect: (brand: 'KOHLER' | 'AQUANT') => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onStartConfigurator, onBrandSelect }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onStartConfigurator }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [previewPdfId, setPreviewPdfId] = useState<{ url: string; title: string } | null>(null);
 

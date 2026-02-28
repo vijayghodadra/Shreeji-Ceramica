@@ -128,18 +128,18 @@ export const ProductTable: React.FC<ProductTableProps> = ({
     };
 
     return (
-        <div className="panel glass-panel mt-6 animate-fade-in" style={{ animationDelay: '0.1s', position: 'relative' }}>
-            <div className="flex justify-between items-center mb-4 gap-4">
-                <h2 className="panel-title mb-0 flex-shrink-0"><Box size={20} /> Products / Bill of Materials</h2>
+        <div className="liquid-glass-warm mt-6 animate-fade-in p-6 w-full max-w-full overflow-hidden" style={{ animationDelay: '0.1s', position: 'relative' }}>
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-4">
+                <h2 className="panel-title mb-0 flex-shrink-0 w-full md:w-auto text-left"><Box size={20} className="text-secondary inline-block mr-2" /> Products / Bill of Materials</h2>
 
-                <div className="relative flex-grow max-w-md">
+                <div className="relative flex-grow w-full max-w-md mx-auto md:mx-0">
                     <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
                             <Search size={16} />
                         </span>
                         <input
                             type="text"
-                            className="input-field w-full pl-10"
+                            className="input-field-warm w-full pl-10"
                             placeholder={`Quick Search & Add ${activeBrand === 'KOHLER' ? 'Kohler' : 'Aquant'} Product...`}
                             value={globalSearch}
                             onChange={(e) => {
@@ -151,7 +151,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                         />
                     </div>
                     {showGlobalSuggestions && (globalSearch.length > 1) && (
-                        <div className="suggestions-dropdown" style={{ maxHeight: '400px' }}>
+                        <div className="suggestions-dropdown glass-premium" style={{ maxHeight: '400px' }}>
                             {activeBrand === 'KOHLER' ? (
                                 <>
                                     {[
@@ -344,7 +344,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     )}
                 </div>
 
-                <button className="btn btn-primary btn-sm flex-shrink-0" onClick={addProduct}>
+                <button className="btn btn-primary btn-sm flex-shrink-0 w-full md:w-auto justify-center" onClick={addProduct}>
                     <Plus size={16} /> Add Product
                 </button>
             </div>
@@ -393,7 +393,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                         )}
                                         <input
                                             type="text"
-                                            className="input-field w-full font-bold"
+                                            className="input-field-warm w-full font-bold"
                                             placeholder="Code"
                                             style={{ fontSize: '0.75rem', padding: '0.3rem 0.4rem' }}
                                             value={product.productCode}
@@ -404,7 +404,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     </div>
 
                                     {activeRowId === product.id && (
-                                        <div className="suggestions-dropdown" style={{ right: '-150px', minWidth: '380px' }}>
+                                        <div className="suggestions-dropdown glass-premium" style={{ right: '-150px', minWidth: '380px' }}>
                                             {history.filter(h =>
                                                 h.productCode?.toLowerCase().includes(product.productCode.toLowerCase()) ||
                                                 h.productName?.toLowerCase().includes(product.productName.toLowerCase())
@@ -481,7 +481,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                 <td style={{ padding: '0.4rem 0.3rem' }}>
                                     <input
                                         type="text"
-                                        className="input-field w-full text-xs"
+                                        className="input-field-warm w-full text-xs"
                                         placeholder="Product Name"
                                         style={{ padding: '0.3rem 0.4rem' }}
                                         value={product.productName}
@@ -493,7 +493,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                 <td style={{ padding: '0.4rem 0.3rem' }}>
                                     <input
                                         type="text"
-                                        className="input-field w-full text-xs"
+                                        className="input-field-warm w-full text-xs"
                                         placeholder="Size"
                                         style={{ padding: '0.3rem 0.4rem' }}
                                         value={product.size}
@@ -503,7 +503,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                 <td style={{ padding: '0.4rem 0.3rem' }}>
                                     <input
                                         type="text"
-                                        className="input-field w-full text-xs"
+                                        className="input-field-warm w-full text-xs"
                                         placeholder="Color"
                                         style={{ padding: '0.3rem 0.4rem' }}
                                         value={product.color}
@@ -513,7 +513,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                 <td className="text-center" style={{ padding: '0.4rem 0.3rem' }}>
                                     <input
                                         type="number"
-                                        className="input-field text-center text-xs"
+                                        className="input-field-warm text-center text-xs"
                                         style={{ width: '45px', padding: '0.3rem 0.3rem' }}
                                         value={product.quantity}
                                         onChange={(e) => updateProduct(product.id, 'quantity', Number(e.target.value))}
@@ -522,7 +522,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                 <td className="text-center" style={{ padding: '0.4rem 0.3rem' }}>
                                     <input
                                         type="number"
-                                        className="input-field text-center text-xs font-bold"
+                                        className="input-field-warm text-center text-xs font-bold"
                                         style={{ width: '85px', padding: '0.3rem 0.3rem' }}
                                         value={product.rate}
                                         onChange={(e) => updateProduct(product.id, 'rate', Number(e.target.value))}
@@ -530,7 +530,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                 </td>
                                 <td className="text-center" style={{ padding: '0.4rem 0.3rem' }}>
                                     <input
-                                        className={`input-field text-center mx-auto text-xs ${discountMode !== 'INDIVIDUAL' ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
+                                        className={`input-field-warm text-center mx-auto text-xs ${discountMode !== 'INDIVIDUAL' ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
                                         style={{ width: '40px', padding: '0.3rem 0.3rem' }}
                                         value={product.discountPercentage}
                                         onChange={(e) => updateProduct(product.id, 'discountPercentage', Number(e.target.value))}
@@ -582,7 +582,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     <div className="flex justify-between items-start gap-2">
                                         <input
                                             type="text"
-                                            className="input-field w-full font-bold text-sm"
+                                            className="input-field-warm w-full font-bold text-sm"
                                             placeholder="Code"
                                             value={product.productCode}
                                             onChange={(e) => updateProduct(product.id, 'productCode', e.target.value)}
@@ -596,7 +596,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     </div>
                                     <input
                                         type="text"
-                                        className="input-field w-full mt-2 text-xs"
+                                        className="input-field-warm w-full mt-2 text-xs"
                                         placeholder="Product Name"
                                         value={product.productName}
                                         onChange={(e) => updateProduct(product.id, 'productName', e.target.value)}
@@ -609,7 +609,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     <label className="input-label text-[10px]">Size</label>
                                     <input
                                         type="text"
-                                        className="input-field w-full"
+                                        className="input-field-warm w-full"
                                         value={product.size}
                                         onChange={(e) => updateProduct(product.id, 'size', e.target.value)}
                                     />
@@ -618,7 +618,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     <label className="input-label text-[10px]">Color</label>
                                     <input
                                         type="text"
-                                        className="input-field w-full"
+                                        className="input-field-warm w-full"
                                         value={product.color}
                                         onChange={(e) => updateProduct(product.id, 'color', e.target.value)}
                                     />
@@ -627,7 +627,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     <label className="input-label text-[10px]">Quantity</label>
                                     <input
                                         type="number"
-                                        className="input-field w-full"
+                                        className="input-field-warm w-full"
                                         value={product.quantity}
                                         onChange={(e) => updateProduct(product.id, 'quantity', Number(e.target.value))}
                                     />
@@ -647,7 +647,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                 <div className="flex items-center gap-2">
                                     <span className="text-[10px] font-bold text-muted uppercase">Disc:</span>
                                     <input
-                                        className={`input-field text-center w-12 ${discountMode !== 'INDIVIDUAL' ? 'bg-gray-100' : ''}`}
+                                        className={`input-field-warm text-center w-12 ${discountMode !== 'INDIVIDUAL' ? 'bg-gray-100' : ''}`}
                                         value={product.discountPercentage}
                                         onChange={(e) => updateProduct(product.id, 'discountPercentage', Number(e.target.value))}
                                         disabled={discountMode !== 'INDIVIDUAL'}

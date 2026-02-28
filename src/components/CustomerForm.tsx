@@ -1,176 +1,130 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { User, Percent } from 'lucide-react';
 import type { CustomerDetails } from '../types';
-import { getCustomerHistory, saveCustomerToHistory } from '../utils/storage';
-import { User, Building2, Mail, Phone, MapPin, Calculator, Percent, FileText } from 'lucide-react';
 
 interface CustomerFormProps {
     customer: CustomerDetails;
     onChange: (field: keyof CustomerDetails, value: string) => void;
     includeGST: boolean;
-    onIncludeGSTChange: (include: boolean) => void;
+    onIncludeGSTChange: (value: boolean) => void;
     gstPercentage: number;
-    onGstPercentageChange: (percentage: number) => void;
+    onGstPercentageChange: (value: number) => void;
 }
 
 export const CustomerForm: React.FC<CustomerFormProps> = ({
-    customer, onChange, includeGST, onIncludeGSTChange, gstPercentage, onGstPercentageChange
+    customer,
+    onChange,
+    includeGST,
+    onIncludeGSTChange,
+    gstPercentage,
+    onGstPercentageChange
 }) => {
-    const [history, setHistory] = useState<CustomerDetails[]>([]);
-    const [showSuggestions, setShowSuggestions] = useState(false);
-
-    useEffect(() => {
-        setHistory(getCustomerHistory());
-    }, []);
-
-    const handleSelectSuggestion = (suggestion: CustomerDetails) => {
-        onChange('customerName', suggestion.customerName);
-        onChange('companyName', suggestion.companyName);
-        onChange('email', suggestion.email);
-        onChange('phone', suggestion.phone);
-        onChange('address', suggestion.address);
-        setShowSuggestions(false);
-    };
-
-    const handleBlur = () => {
-        // Delay hiding to allow click on suggestion
-        setTimeout(() => {
-            setShowSuggestions(false);
-            // Save valid customers to history on blur
-            if (customer.customerName || customer.companyName) {
-                saveCustomerToHistory(customer);
-                setHistory(getCustomerHistory());
-            }
-        }, 200);
-    };
-
     return (
-        <div className="panel glass-panel animate-fade-in relative">
-            <h2 className="panel-title">Client Details</h2>
+        <div className="liquid-glass-warm p-8 animate-reveal-up relative overflow-visible">
+            <h2 className="panel-title flex-shrink-0"><User size={20} className="text-secondary" /> Client Information</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="input-group relative z-20">
-                    <label className="input-label flex items-center gap-2"><User size={12} /> Client Name *</label>
-                    <input
-                        type="text"
-                        className="input-field"
+                <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Client Name / Business</label>
+                    <textarea
+                        className="input-field-warm w-full resize-y"
+                        rows={1}
+                        placeholder="e.g. John Doe / Skyline Architects"
                         value={customer.customerName}
-                        onChange={(e) => {
-                            onChange('customerName', e.target.value);
-                            setShowSuggestions(true);
-                        }}
-                        onFocus={() => setShowSuggestions(true)}
-                        onBlur={handleBlur}
-                        placeholder="Search/Enter name"
+                        onChange={(e) => onChange('customerName', e.target.value)}
                     />
-                    {showSuggestions && history.length > 0 && (
-                        <div className="suggestions-dropdown">
-                            {history.filter(h => h.customerName.toLowerCase().includes(customer.customerName.toLowerCase())).map((h, i) => (
-                                <div
-                                    key={i}
-                                    className="suggestion-item"
-                                    onClick={() => handleSelectSuggestion(h)}
-                                >
-                                    <div className="suggestion-name">{h.customerName}</div>
-                                    <div className="suggestion-meta">{h.phone} - {h.companyName}</div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
 
-                <div className="input-group relative z-10">
-                    <label className="input-label flex items-center gap-2"><Building2 size={12} /> Company</label>
-                    <input
-                        type="text"
-                        className="input-field"
+                <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Company (Optional)</label>
+                    <textarea
+                        className="input-field-warm w-full resize-y"
+                        rows={1}
+                        placeholder="e.g. Shreeji Ceramica"
                         value={customer.companyName}
                         onChange={(e) => onChange('companyName', e.target.value)}
-                        onBlur={handleBlur}
-                        placeholder="Company Name"
                     />
                 </div>
 
-                <div className="input-group relative z-10">
-                    <label className="input-label flex items-center gap-2"><Phone size={12} /> Phone *</label>
-                    <input
-                        type="tel"
-                        className="input-field"
+                <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Phone Number</label>
+                    <textarea
+                        className="input-field-warm w-full resize-y"
+                        rows={1}
+                        placeholder="+91 XXXXX XXXXX"
                         value={customer.phone}
                         onChange={(e) => onChange('phone', e.target.value)}
-                        onBlur={handleBlur}
-                        placeholder="+91"
                     />
                 </div>
 
-                <div className="input-group relative z-10">
-                    <label className="input-label flex items-center gap-2"><Mail size={12} /> Email Address</label>
-                    <input
-                        type="email"
-                        className="input-field"
+                <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Email Address</label>
+                    <textarea
+                        className="input-field-warm w-full resize-y"
+                        rows={1}
+                        placeholder="client@example.com"
                         value={customer.email}
                         onChange={(e) => onChange('email', e.target.value)}
-                        onBlur={handleBlur}
-                        placeholder="client@mail.com"
                     />
                 </div>
 
-                <div className="input-group relative z-10 md:col-span-2">
-                    <label className="input-label flex items-center gap-2"><MapPin size={12} /> Billing Address</label>
-                    <input
-                        type="text"
-                        className="input-field"
+                <div className="md:col-span-2 flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Project Site / Address</label>
+                    <textarea
+                        className="input-field-warm w-full resize-y"
+                        rows={1}
+                        placeholder="Enter full site address..."
                         value={customer.address}
                         onChange={(e) => onChange('address', e.target.value)}
-                        onBlur={handleBlur}
-                        placeholder="Enter full address"
                     />
                 </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-6 flex-wrap">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                        type="checkbox"
-                        checked={includeGST}
-                        onChange={(e) => onIncludeGSTChange(e.target.checked)}
-                        className="w-4 h-4 text-primary rounded focus:ring-primary border-gray-300 pointer-events-auto"
-                    />
-                    <span className="text-sm font-medium text-primary flex items-center gap-1">
-                        <Calculator size={14} className="text-muted" /> Apply GST to Quotation
-                    </span>
+            <div className="mt-8 pt-6 border-t border-black/5 flex flex-wrap items-center justify-between gap-6">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                        <input
+                            type="checkbox"
+                            className="sr-only"
+                            checked={includeGST}
+                            onChange={(e) => onIncludeGSTChange(e.target.checked)}
+                        />
+                        <div className={`w-12 h-6 rounded-full transition-all duration-300 ${includeGST ? 'bg-secondary' : 'bg-gray-200'}`}>
+                            <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform duration-300 ${includeGST ? 'translate-x-6' : ''}`} />
+                        </div>
+                    </div>
+                    <span className="text-sm font-bold text-primary group-hover:text-secondary transition-colors">Apply GST Compliance</span>
                 </label>
 
                 {includeGST && (
-                    <>
-                        <div className="flex items-center gap-2 animate-fade-in relative z-10">
-                            <label className="text-sm text-muted">GST Percentage:</label>
+                    <div className="flex items-center gap-6 animate-reveal-up ml-auto">
+                        <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-bold text-muted uppercase">GST %</label>
                             <div className="relative">
                                 <input
                                     type="number"
-                                    className="input-field py-1 px-2 w-20 text-right pr-6"
+                                    className="input-field-warm py-1 px-3 w-24 pr-8 text-center font-bold text-primary"
                                     value={gstPercentage}
                                     onChange={(e) => onGstPercentageChange(Number(e.target.value) || 0)}
                                     min="0"
                                     max="100"
                                 />
-                                <Percent size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted" />
+                                <Percent size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-primary/40" />
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 animate-fade-in relative z-10 ml-auto">
-                            <label className="text-sm text-muted flex items-center gap-1">
-                                <FileText size={12} /> GSTIN Number:
-                            </label>
+                        <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-bold text-muted uppercase">GSTIN Number</label>
                             <input
                                 type="text"
-                                className="input-field py-1 px-3 w-48 uppercase"
+                                className="input-field-warm py-1 px-4 w-52 font-mono text-sm tracking-wider uppercase"
+                                placeholder="15-DIGIT GSTIN"
                                 value={customer.gstNumber || ''}
                                 onChange={(e) => onChange('gstNumber', e.target.value.toUpperCase())}
-                                placeholder="Enter 15-digit GSTIN"
                                 maxLength={15}
                             />
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
         </div>

@@ -1,4 +1,5 @@
-import { Menu, Sun, Moon } from 'lucide-react';
+import React from 'react';
+import { Menu, Sun, Moon, MapPin } from 'lucide-react';
 
 interface HeaderProps {
     onMenuClick: () => void;
@@ -7,54 +8,61 @@ interface HeaderProps {
     onToggleTheme?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onMenuClick, activeBrand, theme, onToggleTheme }) => {
+export const Header: React.FC<HeaderProps> = ({
+    onMenuClick,
+    activeBrand,
+    theme,
+    onToggleTheme
+}) => {
     return (
-        <header className="app-header">
-            <div className="flex justify-between items-center w-full px-4">
-                <div className="flex items-center gap-4">
+        <header className="header glass-surface">
+            <div className="header-container">
+                <div className="header-left">
                     <button
-                        className="menu-btn p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-primary transition-colors"
+                        className="menu-toggle animate-hover-lift"
                         onClick={onMenuClick}
-                        title="Switch Brand"
+                        aria-label="Toggle Menu"
                     >
-                        <Menu size={24} />
+                        <Menu size={22} />
                     </button>
-                    <div className="brand flex items-center gap-3">
-                        <img src="/logo.png" alt="Shreeji Ceramica" className="hidden sm:block" style={{ height: '45px', width: 'auto', objectFit: 'contain' }} />
-                        <h1 className="flex items-center gap-3">
-                            <span>Shreeji <span className="brand-accent">Ceramica</span></span>
-
-                            {activeBrand && (
-                                <>
-                                    <span className="text-gray-300 dark:text-gray-600 text-3xl font-light leading-none">|</span>
-                                    <span className={`px-4 py-1.5 rounded-lg border-2 text-xl font-bold tracking-wider shadow-sm
-                                        ${activeBrand === 'KOHLER'
-                                            ? 'bg-black text-white border-black'
-                                            : 'bg-[#3498DB] text-white border-[#3498DB]'}`}>
-                                        {activeBrand}
-                                    </span>
-                                </>
-                            )}
-                        </h1>
+                    <div className="header-brand flex items-center gap-3">
+                        <img
+                            src="/logo.png"
+                            alt="Shreeji Ceramica"
+                            style={{ height: '32px', width: 'auto', objectFit: 'contain' }}
+                            className="drop-shadow-sm"
+                        />
+                        <span className="brand-name tracking-tight hidden sm:inline-block">SHREEJI <span className="text-secondary font-black">CERAMICA</span></span>
                     </div>
+                    {activeBrand && (
+                        <div className="header-badge-wrapper reveal-on-scroll visible">
+                            <div className="badge-divider"></div>
+                            <span className={`brand-badge ${activeBrand.toLowerCase()}`}>
+                                {activeBrand}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex items-center gap-6">
-                    <button
-                        onClick={onToggleTheme}
-                        className="p-2.5 rounded-xl bg-surface border border-border shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105"
-                        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-                    >
-                        {theme === 'light' ? (
-                            <Moon size={20} className="text-primary animate-in fade-in zoom-in duration-500" />
-                        ) : (
-                            <Sun size={20} className="text-secondary animate-in fade-in spin-in-90 duration-500" />
-                        )}
-                    </button>
+                <div className="header-right">
+                    <div className="location-tag">
+                        <MapPin size={14} className="text-secondary" />
+                        <span>Vadodara</span>
+                    </div>
 
-                    <div className="header-meta text-muted text-sm text-right mobile-hide border-l border-border pl-6">
-                        <div className="font-bold text-primary">Quotation Portal</div>
-                        <div>{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+                    <div className="header-actions">
+                        <button
+                            onClick={onToggleTheme}
+                            className="theme-toggle glass-premium animate-hover-lift"
+                            aria-label="Toggle Theme"
+                        >
+                            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                        </button>
+
+                        <div className="portal-indicator mobile-hide">
+                            <div className="indicator-dot pulse"></div>
+                            <span>Live Portal</span>
+                        </div>
                     </div>
                 </div>
             </div>

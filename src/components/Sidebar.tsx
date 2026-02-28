@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, Box, FileText, PlusCircle, X } from 'lucide-react';
+import { Box, FileText, PlusCircle, LayoutDashboard } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -13,7 +13,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
     isOpen, activeBrand, onBrandSelect, currentView, onViewChange, onGoToDashboard
 }) => {
-    const [width, setWidth] = React.useState(320);
+    const [width, setWidth] = React.useState(300);
     const [isResizing, setIsResizing] = React.useState(false);
     const sidebarRef = React.useRef<HTMLDivElement>(null);
     const isResizingRef = React.useRef(false);
@@ -32,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         (mouseMoveEvent: MouseEvent) => {
             if (isResizingRef.current && sidebarRef.current) {
                 const newWidth = mouseMoveEvent.clientX;
-                if (newWidth > 200 && newWidth < 800) {
+                if (newWidth > 240 && newWidth < 600) {
                     setWidth(newWidth);
                 }
             }
@@ -54,99 +54,85 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Overlay */}
             <div
                 className={`sidebar-overlay ${isOpen ? 'active' : ''}`}
-                onClick={() => onBrandSelect(activeBrand)} /* Just to close */
+                onClick={() => onBrandSelect(activeBrand)}
             />
 
             <aside
                 ref={sidebarRef}
-                className={`sidebar-secondary ${isOpen ? 'open' : ''} ${isResizing ? 'resizing' : ''}`}
+                className={`sidebar glass-premium ${isOpen ? 'open' : ''} ${isResizing ? 'resizing' : ''}`}
                 style={{ '--sidebar-width': `${width}px` } as React.CSSProperties}
             >
-                <div
-                    className="sidebar-resizer"
-                    onMouseDown={startResizing}
-                >
+                <div className="sidebar-resizer" onMouseDown={startResizing}>
                     <div className="resizer-handle" />
                 </div>
-                <div className="sidebar-header flex justify-between items-center">
-                    <div className="flex items-center gap-2">
-                        <Layers size={20} className="text-primary" />
-                        <span className="font-bold text-lg">Menu</span>
+
+                <div className="sidebar-header">
+                    <div className="sidebar-logo-container">
+                        <img
+                            src="logo.png"
+                            alt="Shreeji Ceramica"
+                            style={{ height: '40px', width: 'auto', objectFit: 'contain' }}
+                            className="sidebar-logo"
+                        />
                     </div>
-                    <button
-                        onClick={() => onBrandSelect(activeBrand)}
-                        className="mobile-only p-2 hover:bg-gray-100 rounded-full"
-                    >
-                        <X size={20} className="text-muted" />
-                    </button>
                 </div>
 
-                <div className="sidebar-content flex-grow overflow-y-auto">
-                    {/* Views Section */}
-                    <div className="mb-6">
-                        <div className="text-xs font-bold text-muted uppercase tracking-wider mb-3 px-1">Navigation</div>
-                        <div className="vertical-stack">
-                            <button
-                                className={`nav-btn`}
-                                onClick={onGoToDashboard}
-                            >
-                                <Layers size={18} />
+                <div className="sidebar-content">
+                    <div className="sidebar-section">
+                        <div className="section-label">Navigation</div>
+                        <nav className="sidebar-nav">
+                            <button className="nav-item" onClick={onGoToDashboard}>
+                                <LayoutDashboard size={18} />
                                 <span>Dashboard</span>
                             </button>
                             <button
-                                className={`nav-btn ${currentView === 'NEW_QUOTE' ? 'active' : ''}`}
+                                className={`nav-item ${currentView === 'NEW_QUOTE' ? 'active' : ''}`}
                                 onClick={() => onViewChange('NEW_QUOTE')}
                             >
                                 <PlusCircle size={18} />
                                 <span>Create Quote</span>
                             </button>
                             <button
-                                className={`nav-btn ${currentView === 'SAVED_QUOTES' ? 'active' : ''}`}
+                                className={`nav-item ${currentView === 'SAVED_QUOTES' ? 'active' : ''}`}
                                 onClick={() => onViewChange('SAVED_QUOTES')}
                             >
                                 <FileText size={18} />
                                 <span>Saved Quotations</span>
                             </button>
+                        </nav>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <div className="section-label">Brands</div>
+                        <div className="brand-selectors">
+                            <button
+                                className={`brand-item ${activeBrand === 'KOHLER' ? 'active' : ''}`}
+                                onClick={() => onBrandSelect('KOHLER')}
+                            >
+                                <div className="brand-dot bg-secondary"></div>
+                                <span>KOHLER</span>
+                            </button>
+                            <button
+                                className={`brand-item ${activeBrand === 'AQUANT' ? 'active' : ''}`}
+                                onClick={() => onBrandSelect('AQUANT')}
+                            >
+                                <div className="brand-dot bg-secondary"></div>
+                                <span>AQUANT</span>
+                            </button>
                         </div>
                     </div>
 
-                    <div className="text-xs font-bold text-muted uppercase tracking-wider mb-3 px-1">Brands</div>
-                    <div className="vertical-stack">
-                        <button
-                            className={`brand-btn ${activeBrand === 'KOHLER' ? 'active' : ''}`}
-                            onClick={() => onBrandSelect('KOHLER')}
-                        >
-                            <div className="brand-icon kohler">K</div>
-                            <div className="brand-info">
-                                <span className="name">KOHLER</span>
-                                <span className="desc">Premium Bath & Kitchen</span>
-                            </div>
-                        </button>
-
-                        <button
-                            className={`brand-btn ${activeBrand === 'AQUANT' ? 'active' : ''}`}
-                            onClick={() => onBrandSelect('AQUANT')}
-                        >
-                            <div className="brand-icon aquant">A</div>
-                            <div className="brand-info">
-                                <span className="name">AQUANT</span>
-                                <span className="desc">Designer Bathware</span>
-                            </div>
-                        </button>
-                    </div>
-
-                    <div className="mt-8 p-4 bg-blue-50/50 rounded-lg border border-blue-100/50">
-                        <div className="flex items-center gap-2 text-primary font-bold text-xs mb-2">
-                            <Box size={14} /> Catalog Note
+                    <div className="catalog-status-panel glass-surface">
+                        <div className="status-header">
+                            <Box size={14} />
+                            <span>Catalog Ready</span>
                         </div>
-                        <p className="text-[10px] text-muted leading-relaxed">
-                            Search results and categories will automatically update based on your selected brand.
-                        </p>
+                        <p>Categories update automatically based on selection.</p>
                     </div>
                 </div>
 
                 <div className="sidebar-footer">
-                    <p className="text-[10px] text-center text-muted opacity-50">Shreeji Ceramica © 2026</p>
+                    <p>SHREEJI CERAMICA © 2026</p>
                 </div>
             </aside>
         </>

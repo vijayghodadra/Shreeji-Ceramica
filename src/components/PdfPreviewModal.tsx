@@ -20,7 +20,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
 
     return (
         <div className="modal-overlay">
-            <div className="modal-container">
+            <div className="modal-container glass-premium">
                 {/* Modal Header */}
                 <div className="modal-header">
                     <div className="modal-title-area">

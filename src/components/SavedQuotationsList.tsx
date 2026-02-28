@@ -96,7 +96,7 @@ export const SavedQuotationsList: React.FC<SavedQuotationsListProps> = ({ onOpen
         const primaryCustomer = userQuotes[0]?.customer;
 
         return (
-            <div className="panel glass-panel mt-6 animate-fade-in flex flex-col h-full" style={{ minHeight: '600px' }}>
+            <div className="liquid-glass-warm mt-6 animate-fade-in flex flex-col h-full p-6" style={{ minHeight: '600px' }}>
                 <div className="flex items-center gap-4 mb-6 pb-4 border-b border-gray-100">
                     <button
                         onClick={() => setSelectedPhone(null)}
@@ -105,8 +105,8 @@ export const SavedQuotationsList: React.FC<SavedQuotationsListProps> = ({ onOpen
                         <ArrowLeft size={20} className="text-muted" />
                     </button>
                     <div>
-                        <h2 className="text-xl font-bold text-primary flex items-center gap-2">
-                            <User size={24} />
+                        <h2 className="text-xl font-bold text-blue-500 flex items-center gap-2">
+                            <User size={24} className="text-pink-500" />
                             {primaryCustomer?.customerName || 'Unknown User'}
                         </h2>
                         <div className="text-sm text-muted flex gap-4 mt-1">
@@ -117,7 +117,7 @@ export const SavedQuotationsList: React.FC<SavedQuotationsListProps> = ({ onOpen
                 </div>
 
                 <div className="flex-grow overflow-auto pr-2">
-                    <h3 className="font-bold text-primary mb-4">Saved Quotations ({userQuotes.length})</h3>
+                    <h3 className="font-bold text-blue-500 mb-4">Saved Quotations ({userQuotes.length})</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {userQuotes.map(quote => (
                             <div
@@ -195,7 +195,7 @@ export const SavedQuotationsList: React.FC<SavedQuotationsListProps> = ({ onOpen
                         </span>
                         <input
                             type="text"
-                            className="input-field w-64 pl-10"
+                            className="input-field-warm w-64 pl-10"
                             placeholder="Search mobile/name..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -220,7 +220,7 @@ export const SavedQuotationsList: React.FC<SavedQuotationsListProps> = ({ onOpen
                             return (
                                 <div
                                     key={phone}
-                                    className="bg-white border border-gray-100 rounded-lg p-4 flex items-center justify-between hover:bg-blue-50 cursor-pointer transition-colors shadow-sm"
+                                    className="bg-white border border-gray-100 rounded-lg p-4 flex items-center justify-between hover:bg-secondary-50 cursor-pointer transition-colors shadow-sm"
                                     onClick={() => setSelectedPhone(phone)}
                                 >
                                     <div className="flex items-center gap-4">
@@ -228,14 +228,19 @@ export const SavedQuotationsList: React.FC<SavedQuotationsListProps> = ({ onOpen
                                             <User size={20} />
                                         </div>
                                         <div>
-                                            <div className="font-bold text-primary text-lg flex items-center gap-2">
-                                                {latestCustomer?.customerName || 'Unknown User'}
-                                                {latestCustomer?.companyName && (
-                                                    <span className="text-xs px-2 py-0.5 bg-gray-100 text-muted rounded-full font-normal">
-                                                        {latestCustomer.companyName}
-                                                    </span>
-                                                )}
+                                            <div className="flex items-center gap-2 group cursor-pointer">
+                                                <div className="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center font-bold text-xs">
+                                                    {latestCustomer?.customerName?.charAt(0) || 'U'}
+                                                </div>
+                                                <h3 className="font-bold text-primary group-hover:text-secondary transition-colors truncate">
+                                                    {latestCustomer?.customerName || 'Unknown User'}
+                                                </h3>
                                             </div>
+                                            {latestCustomer?.companyName && (
+                                                <span className="text-xs px-2 py-0.5 bg-gray-100 text-muted rounded-full font-normal ml-10">
+                                                    {latestCustomer.companyName}
+                                                </span>
+                                            )}
                                             <div className="text-sm text-muted mt-1">
                                                 {phone !== 'Unknown' ? phone : 'No Mobile Number'}
                                             </div>
@@ -243,7 +248,7 @@ export const SavedQuotationsList: React.FC<SavedQuotationsListProps> = ({ onOpen
                                     </div>
                                     <div className="flex items-center gap-6">
                                         <div className="text-right">
-                                            <div className="font-bold text-secondary">
+                                            <div className="font-bold text-gold">
                                                 {userQuotes.length} {userQuotes.length === 1 ? 'Quote' : 'Quotes'}
                                             </div>
                                             <div className="text-xs text-muted">

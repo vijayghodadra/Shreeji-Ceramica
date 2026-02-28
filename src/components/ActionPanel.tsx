@@ -1,9 +1,9 @@
-import { Send, MessageCircle, Download, Eye, Save } from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, MessageCircle, Download, Eye, Save, Percent } from 'lucide-react';
 import type { CustomerDetails, ProductDetails } from '../types';
 import { generatePDF, getPDFFile } from '../utils/pdfGenerator';
 import { formatCurrency, calculateQuoteTotals } from '../utils/calculations';
 import { uploadPDF } from '../utils/supabase';
-import { useState } from 'react';
 
 interface ActionPanelProps {
     customer: CustomerDetails;
@@ -47,7 +47,6 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
         const totals = calculateQuoteTotals(products, discountMode, discValue, includeGST, gstPercentage);
         let message = `*Quotation from Shreeji Ceramica*\n\nHello ${customer.customerName},\n\nPlease find the quotation for your recent inquiry.\n\n*Total Amount: ${formatCurrency(totals.grandTotal)}*\n\nThank you for choosing Shreeji Ceramica!`;
         if (includePdfLink) {
-            // Using String.fromCodePoint for the Document emoji to avoid file encoding corruption
             const pdfEmoji = String.fromCodePoint(0x1F4C4);
             message += `\n\n${pdfEmoji} *View PDF Quotation:* \n${includePdfLink}`;
         }
@@ -58,33 +57,16 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
         setIsSharing(true);
         try {
             const discValue = discountMode === 'COMMON' ? commonDiscountPercentage : globalDiscountAmount;
-
-            // 1. Prepare PDF
             const cleanName = customer.customerName?.replace(/\s+/g, '_') || 'Draft';
             const fileName = `${cleanName}_Quotation.pdf`;
             const pdfFile = await getPDFFile(customer, products, discountMode, discValue, includeGST, gstPercentage);
-
-            // 2. Upload to Supabase for the PDF hosting
             const publicUrl = await uploadPDF(pdfFile, fileName);
-
-            // 3. Construct the Production Vanity URL
-            // This will look like https://shreejiceramica.com/quotations/ClientName.pdf when deployed
-            // For now on your local computer, it will look like http://localhost:5173/quotations/ClientName.pdf
             const vanityUrl = window.location.origin + "/quotations/" + fileName;
-
-            // 4. Construct Message using the Vanity URL
-            // We use the clean Vanity URL as requested. Note: WhatsApp preview cards require the domain to be publicly accessible.
             const messageText = generateMessageText(publicUrl ? vanityUrl : null);
-
-            // 4. Construct WhatsApp Redirection
             const rawPhone = customer.phone.replace(/\D/g, '');
             const phoneNum = rawPhone.length === 10 ? '91' + rawPhone : rawPhone;
             const encodedText = encodeURIComponent(messageText);
-
-            // Use wa.me for the most reliable direct opening + text pre-fill
             const url = `https://wa.me/${phoneNum}?text=${encodedText}`;
-
-            // 6. Direct One-Click Redirect
             window.open(url, '_blank');
         } catch (error) {
             console.error('Error sharing to WhatsApp:', error);
@@ -99,29 +81,24 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
 
     const handleEmail = () => {
         const subject = encodeURIComponent(`Quotation from Shreeji Ceramica`);
-        const body = encodeURIComponent(generateMessageText().replace(/\*/g, '')); // Plain text for email
+        const body = encodeURIComponent(generateMessageText().replace(/\*/g, ''));
         window.location.href = `mailto:${customer.email}?subject=${subject}&body=${body}`;
     };
 
     return (
-        <div className="space-y-4">
-            {/* Discount Control Section */}
-            <div className="panel glass-panel mt-4 p-4 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-                <h3 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
-                    <Save size={16} className="text-secondary" /> Discount Configuration
+        <div className="space-y-6">
+            <div className="liquid-glass-warm p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                <h3 className="text-sm font-bold text-secondary mb-4 flex items-center gap-2 uppercase tracking-tight">
+                    <Percent size={16} className="text-secondary" /> Discount Configuration
                 </h3>
-
-                <div className="flex flex-wrap gap-4 items-end">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-muted uppercase">Discount Method</label>
-                        <div className="flex bg-gray-100 p-1 rounded-lg gap-1">
+                <div className="flex flex-wrap gap-6 items-end">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Discount Method</label>
+                        <div className="liquid-pill-group">
                             {(['INDIVIDUAL', 'COMMON', 'GLOBAL'] as const).map(mode => (
                                 <button
                                     key={mode}
-                                    className={`px-3 py-1 text-xs rounded-md transition-all ${discountMode === mode
-                                        ? 'bg-white shadow-sm text-primary font-bold'
-                                        : 'text-muted hover:text-primary'
-                                        }`}
+                                    className={`liquid-pill-item ${discountMode === mode ? 'active' : ''}`}
                                     onClick={() => onDiscountModeChange(mode)}
                                 >
                                     {mode === 'INDIVIDUAL' ? 'Item Wise' : mode === 'COMMON' ? 'Common %' : 'On Total'}
@@ -131,29 +108,28 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
                     </div>
 
                     {discountMode === 'COMMON' && (
-                        <div className="flex flex-col gap-1 animate-fade-in">
-                            <label className="text-[10px] font-bold text-muted uppercase">Bulk Discount %</label>
+                        <div className="flex flex-col gap-1 animate-reveal-up">
+                            <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Bulk Discount %</label>
                             <div className="relative">
                                 <input
                                     type="number"
-                                    className="input-field w-24 pr-6"
+                                    className="input-field-warm w-full pr-12 text-center"
                                     value={commonDiscountPercentage}
                                     onChange={(e) => onCommonDiscountChange(Number(e.target.value))}
-                                    placeholder="0"
                                 />
-                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted">%</span>
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-primary/30 font-bold">%</span>
                             </div>
                         </div>
                     )}
 
                     {discountMode === 'GLOBAL' && (
-                        <div className="flex flex-col gap-1 animate-fade-in">
-                            <label className="text-[10px] font-bold text-muted uppercase">Flat Discount Amount</label>
+                        <div className="flex flex-col gap-1 animate-reveal-up">
+                            <label className="text-[10px] font-bold text-muted uppercase tracking-wider">Flat Discount Amount</label>
                             <div className="relative">
-                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted">₹</span>
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-secondary">₹</span>
                                 <input
                                     type="number"
-                                    className="input-field w-32 pl-5"
+                                    className="input-field-warm w-36 pl-8"
                                     value={globalDiscountAmount}
                                     onChange={(e) => onGlobalDiscountChange(Number(e.target.value))}
                                     placeholder="0"
@@ -163,49 +139,48 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
                     )}
                 </div>
 
-                <p className="mt-2 text-[10px] text-muted italic">
-                    {discountMode === 'INDIVIDUAL' && 'Apply different discount percentages to each product in the table.'}
-                    {discountMode === 'COMMON' && 'Applies the same discount percentage to every product in the list.'}
-                    {discountMode === 'GLOBAL' && 'Deducts a single flat amount from the final quotation subtotal.'}
+                <p className="mt-3 text-[10px] text-muted-foreground opacity-70 italic font-medium">
+                    {discountMode === 'INDIVIDUAL' && 'Apply liquid-smooth discount percentages to each product independently.'}
+                    {discountMode === 'COMMON' && 'Flow the same discount percentage across every single product.'}
+                    {discountMode === 'GLOBAL' && 'Subtract a single flat amount from the entire quotation stream.'}
                 </p>
             </div>
 
-            {/* Desktop View */}
-            <div className="action-panel desktop-action-panel flex gap-2 items-center flex-wrap">
-                <button className="btn btn-secondary" style={{ padding: '0.6rem 1.2rem', backgroundColor: '#f8fafc', color: '#1e293b', border: '1px solid #e2e8f0' }} onClick={onSaveQuote}>
+            <div className="action-panel desktop-action-panel flex gap-4 items-center flex-wrap">
+                <button className="liquid-button liquid-secondary" onClick={onSaveQuote}>
                     <Save size={16} /> Save Quote
                 </button>
-                <button className="btn btn-secondary" style={{ padding: '0.6rem 1.2rem', backgroundColor: '#f8fafc', color: '#1e293b', border: '1px solid #e2e8f0' }} onClick={onViewPDF}>
+                <button className="liquid-button liquid-secondary" onClick={onViewPDF}>
                     <Eye size={16} /> View PDF
                 </button>
-                <button className="btn btn-primary" style={{ padding: '0.6rem 1.2rem' }} onClick={handleGeneratePDF}>
-                    <Download size={16} /> Generate PDF
+                <button className="liquid-button" onClick={handleGeneratePDF}>
+                    <Download size={18} className="animate-bounce" /> Generate PDF
                 </button>
-                <button className="btn btn-secondary" style={{ padding: '0.6rem 1.2rem' }} onClick={handleEmail}>
+                <button className="liquid-button liquid-secondary" onClick={handleEmail}>
                     <Send size={16} /> Email
                 </button>
                 <button
                     onClick={handleWhatsApp}
                     disabled={isSharing}
-                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1 ${isSharing ? 'bg-gray-400 cursor-wait' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                    className={`liquid-button ${isSharing ? 'opacity-50 cursor-wait' : 'bg-green-500 shadow-green-200'}`}
+                    style={!isSharing ? { background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)', boxShadow: '0 10px 20px rgba(37, 211, 102, 0.3)' } : {}}
                 >
                     <MessageCircle size={18} className={isSharing ? 'animate-spin' : ''} />
-                    {isSharing ? 'Preparing PDF...' : 'WhatsApp'}
+                    {isSharing ? 'Liquidizing...' : 'WhatsApp'}
                 </button>
             </div>
 
-            {/* Mobile Sticky Bar */}
-            <div className="mobile-action-bar">
-                <button className="btn btn-secondary flex-grow" onClick={onSaveQuote}>
-                    <Save size={18} /> <span className="text-xs">Save</span>
+            <div className="mobile-action-bar liquid-glass !border-none !rounded-t-3xl shadow-2xl p-4">
+                <button className="liquid-button liquid-secondary flex-grow p-2" onClick={onSaveQuote}>
+                    <Save size={18} />
                 </button>
-                <button className="btn btn-secondary flex-grow" onClick={onViewPDF}>
-                    <Eye size={18} /> <span className="text-xs">Preview</span>
+                <button className="liquid-button liquid-secondary flex-grow p-2" onClick={onViewPDF}>
+                    <Eye size={18} />
                 </button>
-                <button className="btn btn-primary flex-grow" onClick={handleGeneratePDF}>
-                    <Download size={18} /> <span className="text-xs">PDF</span>
+                <button className="liquid-button flex-grow p-2" onClick={handleGeneratePDF}>
+                    <Download size={18} />
                 </button>
-                <button className="btn btn-accent p-3" onClick={handleWhatsApp}>
+                <button className="liquid-button p-2" onClick={handleWhatsApp} style={{ background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)' }}>
                     <MessageCircle size={20} />
                 </button>
             </div>

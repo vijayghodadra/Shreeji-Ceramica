@@ -15,54 +15,60 @@ export const SummaryTotals: React.FC<SummaryTotalsProps> = ({
     gstPercentage
 }) => {
     return (
-        <div className="panel summary-card animate-fade-in" style={{ animationDelay: '0.2s', padding: '1rem' }}>
-            <h2 className="panel-title text-white mb-3 border-b border-white/20 pb-2" style={{ fontSize: '1rem' }}>
-                <Calculator size={18} /> Quotation Summary
+        <div className="liquid-glass-warm p-8 animate-reveal-up" style={{
+            animationDelay: '0.3s'
+        }}>
+            <h2 className="text-xl font-black mb-6 flex items-center gap-3 border-b border-black/10 pb-4 uppercase tracking-tighter">
+                <Calculator size={20} className="animate-pulse text-secondary" /> Quotation Summary
             </h2>
 
-            <div className="summary-row" style={{ fontSize: '0.9rem' }}>
-                <span>Gross Subtotal</span>
-                <span className="font-bold">{formatCurrency(totals.grossSubtotal)}</span>
-            </div>
+            <div className="space-y-3">
+                <div className="flex justify-between items-center opacity-90">
+                    <span className="text-sm font-medium">Gross Subtotal</span>
+                    <span className="text-lg font-bold">{formatCurrency(totals.grossSubtotal)}</span>
+                </div>
 
-            <div className="summary-row items-center mt-2" style={{ fontSize: '0.9rem' }}>
-                <span className="flex items-center gap-2">
-                    Total Savings
-                    <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/80">
-                        {totals.effectiveDiscountPercentage.toFixed(1)}% OFF
+                <div className="flex justify-between items-center bg-white/10 p-3 rounded-2xl">
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold uppercase tracking-wider opacity-80">Total Savings</span>
+                        <span className="text-xs bg-white text-primary px-2 py-0.5 rounded-full font-bold mt-1 self-start">
+                            {totals.effectiveDiscountPercentage.toFixed(1)}% OFF
+                        </span>
+                    </div>
+                    <span className="text-lg font-bold text-white">
+                        -{formatCurrency(totals.totalItemDiscountAmount + totals.globalDiscountAmount)}
                     </span>
-                </span>
-                <span className="font-bold">
-                    -{formatCurrency(totals.totalItemDiscountAmount + totals.globalDiscountAmount)}
-                </span>
-            </div>
+                </div>
 
-            <div className="summary-row mt-1" style={{ fontSize: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem' }}>
-                <span>Net Taxable</span>
-                <span className="font-bold">{formatCurrency(totals.taxableAmount)}</span>
-            </div>
+                <div className="flex justify-between items-center pt-2 border-t border-white/10">
+                    <span className="text-sm">Net Taxable Amount</span>
+                    <span className="font-bold">{formatCurrency(totals.taxableAmount)}</span>
+                </div>
 
-            <div className="summary-row items-center mt-3 mb-2" style={{ fontSize: '0.85rem' }}>
-                <span className="font-semibold opacity-90">Include GST</span>
-                <span className="font-bold">{includeGST ? `Yes (${gstPercentage}%)` : 'No'}</span>
-            </div>
+                <div className="flex justify-between items-center bg-white/5 px-3 py-2 rounded-xl">
+                    <span className="text-xs font-semibold">Include GST ({gstPercentage}%)</span>
+                    <span className="text-xs font-bold">{includeGST ? 'Enabled' : 'Disabled'}</span>
+                </div>
 
-            {includeGST && (
-                <>
-                    <div className="summary-row mt-1" style={{ fontSize: '0.85rem' }}>
-                        <span>CGST ({gstPercentage / 2}%)</span>
-                        <span>{formatCurrency(totals.cgstAmount)}</span>
+                {includeGST && (
+                    <div className="grid grid-cols-2 gap-2 mt-2 bg-black/10 p-3 rounded-2xl">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] uppercase font-bold opacity-60">CGST ({gstPercentage / 2}%)</span>
+                            <span className="text-sm font-bold">{formatCurrency(totals.cgstAmount)}</span>
+                        </div>
+                        <div className="flex flex-col border-l border-white/10 pl-3">
+                            <span className="text-[10px] uppercase font-bold opacity-60">SGST ({gstPercentage / 2}%)</span>
+                            <span className="text-sm font-bold">{formatCurrency(totals.sgstAmount)}</span>
+                        </div>
                     </div>
-                    <div className="summary-row" style={{ fontSize: '0.85rem' }}>
-                        <span>SGST ({gstPercentage / 2}%)</span>
-                        <span>{formatCurrency(totals.sgstAmount)}</span>
-                    </div>
-                </>
-            )}
+                )}
 
-            <div className="summary-total" style={{ fontSize: '1.2rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '2px solid rgba(255,255,255,0.2)' }}>
-                <span>TOTAL</span>
-                <span>{formatCurrency(totals.grandTotal)}</span>
+                <div className="mt-4 pt-4 border-t-2 border-white/20">
+                    <div className="flex justify-between items-end">
+                        <span className="text-xs font-black uppercase tracking-widest opacity-80">Final Total</span>
+                        <span className="text-3xl font-black">{formatCurrency(totals.grandTotal)}</span>
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -30,7 +30,12 @@ function App() {
   const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
-  const [currentRoute, setCurrentRoute] = useState<'DASHBOARD' | 'BRAND_SELECTION' | 'APP'>('DASHBOARD');
+  const [currentRoute, setCurrentRoute] = useState<'DASHBOARD' | 'BRAND_SELECTION' | 'APP'>(() => {
+    const path = window.location.pathname;
+    if (path === '/dashboard') return 'DASHBOARD';
+    if (path === '/app') return 'APP';
+    return 'BRAND_SELECTION';
+  });
   const [activeBrand, setActiveBrand] = useState<'KOHLER' | 'AQUANT' | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState<'NEW_QUOTE' | 'SAVED_QUOTES'>('NEW_QUOTE');
@@ -168,6 +173,8 @@ function App() {
         onToggleTheme={toggleTheme}
       />
 
+      <div className="app-header-spacer" />
+
       <Sidebar
         isOpen={isSidebarOpen}
         activeBrand={activeBrand}
@@ -257,8 +264,8 @@ function App() {
                 gstPercentage={gstPercentage}
               />
 
-              <div className="panel glass-panel text-xs text-muted animate-fade-in-up stagger-4 animate-hover-lift">
-                <h3 className="font-bold text-primary mb-1">Quick Tips</h3>
+              <div className="liquid-glass-warm text-xs text-muted animate-fade-in-up stagger-4 animate-hover-lift p-4">
+                <h3 className="font-bold text-secondary mb-1 uppercase tracking-tight">Quick Tips</h3>
                 <ul className="list-disc pl-4 space-y-0.5">
                   <li>Enter client details to save to history.</li>
                   <li>Add products using the '+' button.</li>

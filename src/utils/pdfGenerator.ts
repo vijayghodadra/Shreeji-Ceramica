@@ -217,7 +217,6 @@ export const getPDFFile = async (
 const setupHeader = (
     doc: jsPDF,
     primaryColor: [number, number, number],
-    // @ts-ignore
     accentColor: [number, number, number],
     textColor: [number, number, number],
     logoDataUrl: string | null,
@@ -320,7 +319,13 @@ const setupHeader = (
     doc.line(14, dividerY, 196, dividerY);
 
     // ── BELOW DIVIDER: Ref / Date / Prepared By (right) ─────────────────
-    const belowY = dividerY + 7;
+    const titleY = dividerY + 7;
+    const belowY = dividerY + 13;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...accentColor);
+    doc.text('BUSINESS QUOTATION', 14, titleY);
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');

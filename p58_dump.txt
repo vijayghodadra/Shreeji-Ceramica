@@ -1,0 +1,200 @@
+﻿TEXT: X=159.6, Y=412.0 - Pop-Up Brass/Stainless Steel Drains 
+TEXT: X=16.7, Y=608.1 - ΓÇÿInvisibleΓÇÖ Tile Insert Drainers
+TEXT: X=307.8, Y=267.2 - 1481
+TEXT: X=307.8, Y=259.3 - Pop-
+TEXT: X=322.1, Y=259.3 - U
+TEXT: X=326.8, Y=259.3 - p Floor Trap (Grade 204 SS)
+TEXT: X=307.8, Y=251.4 - Size  : 150 x 150 mm
+TEXT: X=307.8, Y=243.6 - MRP  
+TEXT: X=324.2, Y=243.6 - :
+TEXT: X=326.0, Y=243.6 -  
+TEXT: X=327.9, Y=243.6 - `
+TEXT: X=331.1, Y=243.6 -  615/- 
+TEXT: X=303.6, Y=606.1 - Tile Insert Drains
+TEXT: X=307.8, Y=469.8 - 1430
+TEXT: X=307.8, Y=461.9 - 304 SS Tile Insert With Anti 
+TEXT: X=307.8, Y=454.0 - Cockroach
+TEXT: X=307.8, Y=446.1 - Size  : 125 x 125 mm
+TEXT: X=307.8, Y=438.2 - MRP  
+TEXT: X=324.2, Y=438.2 - :
+TEXT: X=326.0, Y=438.2 -  
+TEXT: X=327.9, Y=438.2 - `
+TEXT: X=331.1, Y=438.2 -  1,550/- 
+TEXT: X=307.7, Y=669.6 - Shower Channel Base (304 SS)
+TEXT: X=354.1, Y=661.7 - MRP : 
+TEXT: X=373.9, Y=661.7 - `
+TEXT: X=377.1, Y=661.7 -  
+TEXT: X=378.9, Y=661.7 - 4,400/-
+TEXT: X=307.7, Y=661.7 - 60080 BS 
+TEXT: X=341.5, Y=661.7 -        
+TEXT: X=354.0, Y=653.8 - MRP : 
+TEXT: X=373.8, Y=653.8 - `
+TEXT: X=377.0, Y=653.8 -  
+TEXT: X=378.8, Y=653.8 - 5,000/-
+TEXT: X=307.7, Y=653.8 - 750080 BS
+TEXT: X=346.8, Y=653.8 -     
+TEXT: X=348.7, Y=645.9 -    MRP : 
+TEXT: X=373.9, Y=645.9 - `
+TEXT: X=377.1, Y=645.9 -  
+TEXT: X=378.9, Y=645.9 - 6,100/-
+TEXT: X=307.7, Y=645.9 - 90080 BS 
+TEXT: X=341.5, Y=645.9 -     
+TEXT: X=307.7, Y=638.0 - 120080 BS
+TEXT: X=343.4, Y=638.0 -       MRP : 
+TEXT: X=374.0, Y=638.0 - `
+TEXT: X=377.2, Y=638.0 -  
+TEXT: X=379.1, Y=638.0 - 11,000/-
+TEXT: X=451.0, Y=469.8 - 1431
+TEXT: X=451.0, Y=461.9 - 304 SS Tile Insert With Anti 
+TEXT: X=451.0, Y=454.0 - Cockroach
+TEXT: X=451.0, Y=446.1 - Size  : 150 x 150 mm
+TEXT: X=451.0, Y=438.2 - MRP :
+TEXT: X=469.3, Y=438.2 -  
+TEXT: X=471.1, Y=438.2 - `
+TEXT: X=474.3, Y=438.2 -  1,900/-
+TEXT: X=451.0, Y=669.6 - Shower Channel Base (304 SS)
+TEXT: X=494.5, Y=661.7 -  
+TEXT: X=501.0, Y=661.7 -    MRP : 
+TEXT: X=526.2, Y=661.7 - `
+TEXT: X=529.4, Y=661.7 -  
+TEXT: X=531.2, Y=661.7 - 4,400/-
+TEXT: X=451.0, Y=661.7 - 60080 BS CH
+TEXT: X=451.0, Y=653.8 - 750080 BS CH
+TEXT: X=498.7, Y=653.8 -     MRP : 
+TEXT: X=526.2, Y=653.8 - `
+TEXT: X=529.4, Y=653.8 -  
+TEXT: X=531.2, Y=653.8 - 5,000/-
+TEXT: X=451.0, Y=645.9 - 90080 BS CH
+TEXT: X=494.5, Y=645.9 -  
+TEXT: X=501.0, Y=645.9 -    MRP : 
+TEXT: X=526.2, Y=645.9 - `
+TEXT: X=529.4, Y=645.9 -  
+TEXT: X=531.2, Y=645.9 - 6,100/-
+TEXT: X=451.0, Y=638.0 - 120080 BS CH
+TEXT: X=486.7, Y=638.0 -  
+TEXT: X=498.3, Y=638.0 -      MRP : 
+TEXT: X=526.2, Y=638.0 - `
+TEXT: X=529.4, Y=638.0 -  
+TEXT: X=531.2, Y=638.0 - 11,000/-
+TEXT: X=190.9, Y=823.7 - FLOOR DRAINS IN STAINLESS STEEL
+TEXT: X=16.3, Y=412.0 - Brass Drain
+TEXT: X=21.3, Y=267.2 - 1432
+TEXT: X=21.3, Y=259.3 - Tile Insert Brass Drain With Anti Cockroach
+TEXT: X=21.3, Y=251.4 - Size  : 100 x 100 mm
+TEXT: X=21.3, Y=243.6 - MRP :
+TEXT: X=39.5, Y=243.6 -  
+TEXT: X=41.3, Y=243.6 - `
+TEXT: X=44.6, Y=243.6 -  2,500/-
+TEXT: X=21.3, Y=470.3 - Invisible Tile Insert Shower Channel Drainer 
+TEXT: X=21.3, Y=463.0 - (304 SS) Including Base With Centre-Outlet
+TEXT: X=62.8, Y=455.7 -  
+TEXT: X=82.0, Y=455.7 - MRP : 
+TEXT: X=100.3, Y=455.7 - `
+TEXT: X=103.3, Y=455.7 -  
+TEXT: X=104.9, Y=455.7 - 9,000/-
+TEXT: X=21.3, Y=455.7 - 1434-600 mm
+TEXT: X=21.3, Y=448.4 - 1434-750 mm
+TEXT: X=62.8, Y=448.4 -  
+TEXT: X=82.0, Y=448.4 - MRP : 
+TEXT: X=100.3, Y=448.4 - `
+TEXT: X=103.3, Y=448.4 -  
+TEXT: X=104.9, Y=448.4 - 10,500/-
+TEXT: X=21.3, Y=441.1 - 1434-900 mm
+TEXT: X=62.8, Y=441.1 -  
+TEXT: X=82.0, Y=441.1 - MRP : 
+TEXT: X=100.3, Y=441.1 - `
+TEXT: X=103.3, Y=441.1 -  
+TEXT: X=104.9, Y=441.1 - 12,000/-
+TEXT: X=21.3, Y=433.8 - 1434-1200 mm
+TEXT: X=66.2, Y=433.8 -  
+TEXT: X=82.0, Y=433.8 - MRP : 
+TEXT: X=100.3, Y=433.8 - `
+TEXT: X=103.3, Y=433.8 -  
+TEXT: X=104.9, Y=433.8 - 18,250/-
+TEXT: X=16.6, Y=801.5 - Channel Drainers
+TEXT: X=21.3, Y=669.6 - Line-Design Shower Channel Drain 
+TEXT: X=21.3, Y=661.3 - Without Base (304 SS) 
+TEXT: X=60.7, Y=653.0 -      
+TEXT: X=82.0, Y=653.0 - MRP : 
+TEXT: X=101.8, Y=653.0 - `
+TEXT: X=105.0, Y=653.0 -  
+TEXT: X=106.8, Y=653.0 - 2,850/-
+TEXT: X=21.3, Y=653.0 - 60080 TL 
+TEXT: X=53.5, Y=653.0 -     
+TEXT: X=72.0, Y=644.7 -  
+TEXT: X=82.0, Y=644.7 - MRP : 
+TEXT: X=101.8, Y=644.7 - `
+TEXT: X=105.0, Y=644.7 -  
+TEXT: X=106.8, Y=644.7 - 3,575/-
+TEXT: X=21.3, Y=644.7 - 750080 TL 
+TEXT: X=57.6, Y=644.7 -         
+TEXT: X=67.9, Y=636.4 -  
+TEXT: X=82.0, Y=636.4 - MRP : 
+TEXT: X=101.8, Y=636.4 - `
+TEXT: X=105.0, Y=636.4 -  
+TEXT: X=106.8, Y=636.4 - 5,500/-
+TEXT: X=21.3, Y=636.4 - 90080 TL
+TEXT: X=51.7, Y=636.4 -          
+TEXT: X=21.3, Y=628.1 - 120080 TL
+TEXT: X=82.0, Y=628.1 - MRP : 
+TEXT: X=101.8, Y=628.1 - `
+TEXT: X=105.0, Y=628.1 -  
+TEXT: X=106.8, Y=628.1 - 6,700/-
+TEXT: X=164.5, Y=267.2 - 1429
+TEXT: X=164.5, Y=260.1 - Pop-
+TEXT: X=178.8, Y=260.1 - U
+TEXT: X=183.5, Y=260.1 - p Floor Trap (Grade 304 SS) 
+TEXT: X=164.5, Y=253.0 - Matt Finish
+TEXT: X=164.5, Y=245.9 - Size  : 150 x 150 mm
+TEXT: X=164.5, Y=238.8 - MRP  
+TEXT: X=180.9, Y=238.8 - :
+TEXT: X=182.7, Y=238.8 -  
+TEXT: X=184.5, Y=238.8 - `
+TEXT: X=187.8, Y=238.8 -  1,550/- 
+TEXT: X=164.7, Y=469.8 - 1433
+TEXT: X=164.7, Y=461.1 - Invisible Tile Insert Drainer (304 SS)
+TEXT: X=164.7, Y=452.4 - Size  : 1
+TEXT: X=188.4, Y=452.4 - 5
+TEXT: X=192.0, Y=452.4 - 0 x 1
+TEXT: X=206.2, Y=452.4 - 5
+TEXT: X=209.8, Y=452.4 - 0 mm
+TEXT: X=164.7, Y=443.8 - MRP  
+TEXT: X=181.1, Y=443.8 - :
+TEXT: X=182.9, Y=443.8 -  
+TEXT: X=184.7, Y=443.8 - `
+TEXT: X=188.0, Y=443.8 -  6,200/- 
+TEXT: X=164.7, Y=669.6 - Tile-Insert Shower Channel Drain 
+TEXT: X=164.7, Y=661.3 - Without Base (304 SS)
+TEXT: X=193.2, Y=653.0 -           MRP : 
+TEXT: X=231.0, Y=653.0 - `
+TEXT: X=234.2, Y=653.0 -  
+TEXT: X=236.0, Y=653.0 - 3,400/-
+TEXT: X=164.7, Y=653.0 - 60080 TI
+TEXT: X=197.3, Y=644.7 -         MRP : 
+TEXT: X=231.0, Y=644.7 - `
+TEXT: X=234.2, Y=644.7 -  
+TEXT: X=236.0, Y=644.7 - 4,250/-
+TEXT: X=164.7, Y=644.7 - 750080 TI
+TEXT: X=209.4, Y=636.4 -  MRP : 
+TEXT: X=231.0, Y=636.4 - `
+TEXT: X=234.2, Y=636.4 -  
+TEXT: X=236.0, Y=636.4 - 6,100/-
+TEXT: X=164.7, Y=636.4 - 90080 TI
+TEXT: X=193.2, Y=636.4 -          
+TEXT: X=164.7, Y=628.1 - 120080 TI
+TEXT: X=211.2, Y=628.1 - MRP : 
+TEXT: X=231.0, Y=628.1 - `
+TEXT: X=234.2, Y=628.1 -  
+TEXT: X=236.0, Y=628.1 - 7,150/-
+TEXT: X=17.1, Y=11.5 - 58
+IMAGE: ID=img_p57_1 at X=330.5, Y=321.5, W=77.9, H=40.3
+IMAGE: ID=img_p57_2 at X=303.3, Y=468.2, W=132.2, H=133.6
+IMAGE: ID=img_p57_3 at X=311.1, Y=713.9, W=116.2, H=47.7
+IMAGE: ID=img_p57_4 at X=446.0, Y=449.2, W=132.6, H=153.0
+IMAGE: ID=img_p57_5 at X=455.7, Y=715.5, W=113.6, H=44.5
+IMAGE: ID=img_p57_6 at X=51.1, Y=318.0, W=63.7, H=47.3
+IMAGE: ID=img_p57_7 at X=16.9, Y=477.4, W=132.0, H=124.6
+IMAGE: ID=img_p57_8 at X=16.9, Y=669.6, W=131.7, H=127.1
+IMAGE: ID=img_p57_9 at X=187.2, Y=321.5, W=77.9, H=40.3
+IMAGE: ID=img_p57_10 at X=160.3, Y=471.8, W=131.9, H=130.6
+IMAGE: ID=img_p57_11 at X=160.2, Y=679.5, W=132.2, H=117.1

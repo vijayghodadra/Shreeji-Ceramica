@@ -50,7 +50,7 @@ const extractData = async () => {
                 const s = it.str;
                 if (s.includes('Vol') || s.includes('Page') || s.includes('Size') || s.includes('MRP')) return false;
                 if (s.match(/[0-9]{3} x [0-9]{3}/)) return false;
-                if (s.match(/mm/i) || s.match(/\/\-/)) return false;
+                if (s.match(/^[0-9\s]+mm$/i) || s.includes('/-')) return false;
                 if (s.length > 50) return false;
                 if (s.match(/^[0-9]+$/) && s.length < 3) return false;
                 return true;
@@ -64,12 +64,12 @@ const extractData = async () => {
             if (!baseCode) continue;
 
             let relatedItems = items.filter(it => {
-                const searchYSpread = 300;
-                return it.y <= codeItem.y + 10 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 30) && it.x < (codeItem.x + 160);
+                const searchYSpread = 40;
+                return it.y <= codeItem.y + 4 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 30) && it.x < (codeItem.x + 100);
             });
             relatedItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);
             let blob = relatedItems.map(it => it.str).join(' ');
-            let name = blob.split(/MRP|Size|●/i)[0].trim();
+            let name = blob.split(/\bMRP\b|\bSize\b|●/i)[0].trim();
             // Clean up name: remove the product code and any color variant codes (e.g. 4041 BRG)
             // Use word boundaries \b to avoid partial word matching (e.g. Brass -> Bra)
             name = name.replace(/\b\d{4}\s+[A-Z]{2,3}\b/g, '').trim();
@@ -111,16 +111,16 @@ const extractData = async () => {
             const baseCode = baseCodeMatch ? baseCodeMatch[1] : null;
 
             let relatedItems = items.filter(it => {
-                const searchYSpread = 300;
-                return it.y <= codeItem.y + 10 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 30) && it.x < (codeItem.x + 160);
+                const searchYSpread = 40;
+                return it.y <= codeItem.y + 4 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 30) && it.x < (codeItem.x + 100);
             });
 
             relatedItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);
             let blob = relatedItems.map(it => it.str).join(' ');
 
-            let mrpMatch = blob.match(/MRP\s*[:\s]*`?\s*([0-9,]+)/i);
-            let sizeMatch = blob.match(/Size\s*[:\s]*([^●?]+?)(?=\s*MRP|\s*●|$)/i);
-            let name = blob.split(/MRP|Size|●/i)[0].trim();
+            let mrpMatch = blob.match(/\bMRP\b\s*[:\s]*`?\s*([0-9,]+)/i);
+            let sizeMatch = blob.match(/\bSize\b\s*[:\s]*([^●?]+?)(?=\s*MRP|\s*●|$)/i);
+            let name = blob.split(/\bMRP\b|\bSize\b|●/i)[0].trim();
 
             if (mrpMatch || baseDescriptions.has(baseCode)) {
                 const rate = mrpMatch ? parseInt(mrpMatch[1].replace(/,/g, ''), 10) : (baseDescriptions.get(baseCode)?.rate || 0);

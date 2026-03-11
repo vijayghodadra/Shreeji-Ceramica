@@ -1,0 +1,11 @@
+﻿Found 2604 on page 21
+Text coords: X=21.26, Y=487.92
+Images near 2604:
+  [0] ID=img_p20_8 W=154 H=246 DX=133 DY=97 Ratio=0.63 Area=37884
+  [1] ID=img_p20_6 W=51 H=146 DX=62 DY=156 Ratio=0.35 Area=7446
+  [2] ID=img_p20_2 W=71 H=55 DX=205 DY=146 Ratio=1.29 Area=3905
+  [3] ID=img_p20_7 W=154 H=65 DX=133 DY=264 Ratio=2.37 Area=10010
+  [4] ID=img_p20_4 W=99 H=61 DX=348 DY=47 Ratio=1.62 Area=6039
+  [5] ID=img_p20_5 W=99 H=59 DX=348 DY=146 Ratio=1.68 Area=5841
+  [6] ID=img_p20_3 W=59 H=71 DX=348 DY=240 Ratio=0.83 Area=4189
+  [7] ID=img_p20_1 W=54 H=85 DX=491 DY=240 Ratio=0.64 Area=4590

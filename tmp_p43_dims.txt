@@ -1,0 +1,1 @@
+img_0_x508_y218.jpg w:40 h:71\nimg_10_x393_y609.jpg w:28 h:55\nimg_1_x417_y218.jpg w:40 h:71\nimg_2_x545_y746.jpg w:22 h:23\nimg_3_x484_y733.jpg w:30 h:56\nimg_4_x36_y734.jpg w:24 h:56\nimg_5_x403_y480.jpg w:78 h:75\nimg_6_x545_y619.jpg w:22 h:23\nimg_7_x35_y609.jpg w:28 h:55\nimg_8_x303_y609.jpg w:28 h:55\nimg_9_x123_y609.jpg w:28 h:55

@@ -1,0 +1,20 @@
+﻿[
+  {
+    "id": "5",
+    "productCode": "2639 AB",
+    "productName": "2639 AB - AB Free Standing Brass Bath Mixer With Brass Hand Shower",
+    "rate": 197500,
+    "size": "1110 mm",
+    "color": "AB",
+    "image": "/catalog/aquant_images/2639_AB.jpg"
+  },
+  {
+    "id": "28",
+    "productCode": "2639 G",
+    "productName": "2639 G Free Standing Brass Bath Mixer With Brass Hand Shower",
+    "rate": 197500,
+    "size": "1110 mm",
+    "color": "Gold",
+    "image": "/catalog/aquant_images/2639_G.jpg"
+  }
+]

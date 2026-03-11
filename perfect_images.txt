@@ -1,0 +1,3 @@
+﻿Starting Perfect Image Extraction with Bipartite Matching...
+Old images cleared.
+Extraction complete! Successfully mapped and saved 1224 images perfectly.

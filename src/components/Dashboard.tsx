@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import { CatalogViewerModal } from './CatalogViewerModal';
 import { LiquidUnlockSlider } from './LiquidUnlockSlider';
+import { getSavedQuotations } from '../utils/storage';
 
 interface Category {
     id: string;
@@ -32,17 +33,24 @@ const aquantCategories: Category[] = [
 ];
 
 const KOHLER_PDF = "/Kohler_PriceBook_Nov'25 Edition.pdf";
-const AQUANT_PDF = "/Aquant Price List Vol. 14 Feb. 2025 - Low Res Searchable.pdf";
+const AQUANT_PDF = "/Aquant Price List Vol 15. Feb 2026_Searchable.pdf";
 
 interface DashboardProps {
     onStartConfigurator: () => void;
     onBrandSelect: (brand: 'KOHLER' | 'AQUANT') => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onStartConfigurator }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onStartConfigurator, onBrandSelect }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [previewPdfId, setPreviewPdfId] = useState<{ url: string; title: string } | null>(null);
     const [currentBgIndex, setCurrentBgIndex] = useState(0);
+    const [aiInsights, setAiInsights] = useState<{
+        hasQuotes: boolean;
+        lastBrand: 'KOHLER' | 'AQUANT' | null;
+        totalQuotes: number;
+        topCategory: string | null;
+        lastCustomer: string | null;
+    }>({ hasQuotes: false, lastBrand: null, totalQuotes: 0, topCategory: null, lastCustomer: null });
 
     const backgroundImages = [
         '/aquant_hero_bg.png',
@@ -52,6 +60,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ onStartConfigurator }) => 
     useEffect(() => {
         // Staggered entrance animation effect
         const timer = setTimeout(() => setIsVisible(true), 100);
+
+        // Generate AI Insights from History
+        const savedQuotes = getSavedQuotations();
+        if (savedQuotes.length > 0) {
+            const sortedQuotes = [...savedQuotes].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            const lastQuote = sortedQuotes[0];
+
+            // Simple logic for top category
+            let kohlerCount = 0;
+            let aquantCount = 0;
+            savedQuotes.forEach(q => {
+                if (q.brand === 'KOHLER') kohlerCount++;
+                if (q.brand === 'AQUANT') aquantCount++;
+            });
+
+            const topCat = kohlerCount > aquantCount ? 'KOHLER Sanitaryware' : 'AQUANT Wellness';
+
+            setAiInsights({
+                hasQuotes: true,
+                lastBrand: lastQuote.brand,
+                totalQuotes: savedQuotes.length,
+                topCategory: topCat,
+                lastCustomer: lastQuote.customer.customerName || 'Recent Client'
+            });
+        }
+
         return () => clearTimeout(timer);
     }, []);
 
@@ -125,6 +159,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ onStartConfigurator }) => 
                     </div>
                 </div>
             </section>
+
+            {/* AI Smart Insight Section */}
+            {aiInsights.hasQuotes && (
+                <section className="py-12 px-4 max-w-5xl mx-auto -mt-16 relative z-20 reveal-on-scroll">
+                    <div className="liquid-glass-warm p-6 flex flex-col md:flex-row items-center justify-between gap-6 border-l-4 border-l-purple-500 shadow-2xl bg-white/90">
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-purple-100 text-purple-600 rounded-full shadow-inner mt-1">
+                                <Sparkles size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold font-black text-gray-800 tracking-tight flex items-center gap-2">
+                                    TEJASKP AI Smart Insight <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">Auto-detected</span>
+                                </h3>
+                                <p className="text-gray-600 font-medium text-sm mt-1">
+                                    You've drafted <span className="font-bold text-primary">{aiInsights.totalQuotes} quotations</span> recently.
+                                    Your most frequent focus is <span className="font-bold text-secondary">{aiInsights.topCategory}</span>.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                            <button
+                                onClick={() => onBrandSelect(aiInsights.lastBrand || 'KOHLER')}
+                                className="liquid-button !px-6 !py-3 !text-sm group"
+                            >
+                                Resume {aiInsights.lastBrand} Quote for {aiInsights.lastCustomer}
+                                <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Kohler Categories Section */}
             <section id="kohler-section" className="dashboard-categories-section py-20">

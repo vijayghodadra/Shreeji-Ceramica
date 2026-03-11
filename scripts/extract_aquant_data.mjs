@@ -6,146 +6,205 @@ import { pathToFileURL } from 'url';
 const workerPath = pathToFileURL(path.join(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs')).href;
 pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
 
-const PDF_PATH = './public/Aquant Price List Vol. 14 Feb. 2025 - Low Res Searchable.pdf';
+const PDF_PATH = './public/Aquant Price List Vol 15. Feb 2026_Searchable.pdf';
 
 const extractData = async () => {
     const dataBuffer = new Uint8Array(fs.readFileSync(PDF_PATH));
     const loadingTask = pdfjs.getDocument({ data: dataBuffer });
     const doc = await loadingTask.promise;
 
-    let products = [];
+    let allProducts = [];
+
+    // PRE-PASS: Find all sliced special finish images
+    const imgDir = './public/catalog/aquant_images/';
+    const slicedImages = fs.existsSync(imgDir) ? fs.readdirSync(imgDir).filter(f => f.match(/^\d{4}_[A-Z]{2,3}\.jpg$/)) : [];
+    const slicedCodes = new Set(slicedImages.map(f => f.split('_')[0]));
+
+    const colorMap = {
+        'BRG': 'Brushed Rose Gold',
+        'BG': 'Brushed Gold',
+        'GG': 'Graphite Grey',
+        'MB': 'Matt Black',
+        'RG': 'Rose Gold',
+        'CP': 'Chrome',
+        'G': 'Gold',
+        'ORB': 'Oil Rubbed Bronze',
+        'SS': 'Stainless Steel'
+    };
+
+    // Store descriptions discovered for each 4-digit base code
+    const baseDescriptions = new Map();
 
     for (let i = 1; i <= doc.numPages; i++) {
         const page = await doc.getPage(i);
         const textContent = await page.getTextContent();
 
-        let rawItems = textContent.items.map(it => ({
+        let items = textContent.items.map(it => ({
             str: it.str.replace(/\u0000/g, ' ').trim(),
             x: it.transform[4],
             y: it.transform[5]
         })).filter(it => it.str.length > 0);
 
-        // Group into lines first to merge stuff like "MRP" ":" "`" "4,75,000" that are on the exact same line within a column
-        let linesMap = new Map();
-        for (let item of rawItems) {
-            let key = Math.round(item.y);
-            // find if there is an existing line close to it horizontally and vertically
-            let matchedKey = Array.from(linesMap.keys()).find(k => Math.abs(k - key) <= 3);
-            if (matchedKey !== undefined) {
-                linesMap.get(matchedKey).push(item);
-            } else {
-                linesMap.set(key, [item]);
-            }
-        }
+        const codes = items.filter(it => it.str.match(/^(?:[0-9]{3,6}(?:[\s\+\/\-]+[a-zA-Z0-9\+\/\-]{1,15})*(?:\s*-\s*[a-zA-Z\s]+)?|Wooden Seat Cover)$/))
+            .filter(it => {
+                const s = it.str;
+                if (s.includes('Vol') || s.includes('Page') || s.includes('Size') || s.includes('MRP')) return false;
+                if (s.match(/[0-9]{3} x [0-9]{3}/)) return false;
+                if (s.length > 50) return false;
+                if (s.match(/^[0-9]+$/) && s.length < 3) return false;
+                return true;
+            });
 
-        // Merge segments on the same line that are close horizontally
-        let mergedItems = [];
-        for (let [y, itemsOnLine] of linesMap.entries()) {
-            itemsOnLine.sort((a, b) => a.x - b.x);
-            let merged = [];
-            let current = null;
-            for (let item of itemsOnLine) {
-                if (!current) {
-                    current = { ...item, text: item.str };
-                } else if (item.x - (current.x + current.text.length * 3) < 40) { // close enough to merge
-                    current.text += ' ' + item.str;
-                } else {
-                    merged.push(current);
-                    current = { ...item, text: item.str };
+        // First Pass on Page: Discover descriptions for base codes
+        for (let codeItem of codes) {
+            let code = codeItem.str;
+            const baseCodeMatch = code.match(/^(\d{4})/);
+            const baseCode = baseCodeMatch ? baseCodeMatch[1] : null;
+            if (!baseCode) continue;
+
+            let relatedItems = items.filter(it => {
+                const searchYSpread = 300;
+                return it.y <= codeItem.y + 5 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 250) && it.x < (codeItem.x + 300);
+            });
+            relatedItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);
+            let blob = relatedItems.map(it => it.str).join(' ');
+            let name = blob.split(/MRP|Size|●/i)[0].trim();
+            // Clean up name: remove the product code and any color variant codes (e.g. 4041 BRG)
+            // Use word boundaries \b to avoid partial word matching (e.g. Brass -> Bra)
+            name = name.replace(/\b\d{4}\s+[A-Z]{2,3}\b/g, '').trim();
+            name = name.replace(/\b\d{4}\b/g, '').trim();
+
+            const colorPatterns = Object.entries(colorMap).flatMap(([k, v]) => [k, v]);
+            // Sort patterns by length descending to match longer phrases first
+            colorPatterns.sort((a, b) => b.length - a.length);
+
+            for (const pattern of colorPatterns) {
+                // Use word boundaries and only replace once or twice if needed, but carefully
+                const pRegex = new RegExp('\\b(' + pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')\\b', 'gi');
+                name = name.replace(pRegex, '').trim();
+            }
+            name = name.replace(/^[- ]+/, '').replace(/[- ]+$/, '').trim();
+            name = name.replace(/\s+/g, ' ');
+
+            if (name.length > 2) { // Minimal valid name
+                if (!baseDescriptions.has(baseCode) || name.length > baseDescriptions.get(baseCode).name.length) {
+                    let mrpMatch = blob.match(/MRP\s*[:\s]*`?\s*([0-9,]+)/i);
+                    let sizeMatch = blob.match(/Size\s*[:\s]*([^●?]+?)(?=\s*MRP|\s*●|$)/i);
+                    baseDescriptions.set(baseCode, { name, size: sizeMatch ? sizeMatch[1].trim() : "", rate: mrpMatch ? parseInt(mrpMatch[1].replace(/,/g, ''), 10) : 0 });
                 }
             }
-            if (current) merged.push(current);
-            mergedItems.push(...merged);
         }
 
-        // Now cluster merged items into columns by X
-        // typical columns: X around 20, 200, 400
-        let columns = {};
-        for (let item of mergedItems) {
-            // define a column slot (nearest 100 might be too wide, lets cluster by nearest center)
-            const colIndex = Math.floor(item.x / 100);
-            // Better: group by arbitrary x clusters
-            let placed = false;
-            for (let colKey in columns) {
-                if (Math.abs(parseFloat(colKey) - item.x) < 80) { // within 80px width
-                    columns[colKey].push(item);
-                    placed = true;
-                    break;
-                }
+        // Second Pass on Page: Process variants
+        for (let codeItem of codes) {
+            let code = codeItem.str;
+            let inlineColor = "";
+
+            if (code.includes(' - ')) {
+                const parts = code.split(' - ');
+                code = parts[0].trim();
+                inlineColor = parts.slice(1).join(' - ').trim();
             }
-            if (!placed) {
-                columns[item.x.toString()] = [item];
-            }
-        }
 
-        // Now process each column top-to-bottom
-        for (let colKey in columns) {
-            let colItems = columns[colKey];
-            colItems.sort((a, b) => b.y - a.y); // top to bottom
+            const baseCodeMatch = code.match(/^(\d{4})/);
+            const baseCode = baseCodeMatch ? baseCodeMatch[1] : null;
 
-            let currentProduct = null;
+            let relatedItems = items.filter(it => {
+                const searchYSpread = 300;
+                return it.y <= codeItem.y + 5 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 250) && it.x < (codeItem.x + 300);
+            });
 
-            for (let j = 0; j < colItems.length; j++) {
-                let text = colItems[j].text;
-                const codeNameMatch = text.match(/^([a-zA-Z0-9]+(?:\s[a-zA-Z0-9]+)?)\s*-\s*(.+)$/);
+            relatedItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);
+            let blob = relatedItems.map(it => it.str).join(' ');
 
-                if (codeNameMatch && codeNameMatch[1].length <= 10 && !text.includes('Volume')) {
-                    if (codeNameMatch[1].trim() === '9272') console.log(`[Page ${i}] FOUND 9272 CODE MATCH`);
-                    if (currentProduct && currentProduct.productCode && currentProduct.rate > 0) {
-                        products.push(currentProduct);
+            let mrpMatch = blob.match(/MRP\s*[:\s]*`?\s*([0-9,]+)/i);
+            let sizeMatch = blob.match(/Size\s*[:\s]*([^●?]+?)(?=\s*MRP|\s*●|$)/i);
+            let name = blob.split(/MRP|Size|●/i)[0].trim();
+
+            if (mrpMatch || baseDescriptions.has(baseCode)) {
+                const rate = mrpMatch ? parseInt(mrpMatch[1].replace(/,/g, ''), 10) : (baseDescriptions.get(baseCode)?.rate || 0);
+                const size = sizeMatch ? sizeMatch[1].trim() : (baseDescriptions.get(baseCode)?.size || "");
+
+                let color = inlineColor;
+                if (!color) {
+                    const mrpIndex = blob.search(/MRP/i);
+                    if (mrpIndex !== -1) {
+                        const afterMrp = blob.substring(mrpIndex).replace(/MRP\s*[:\s]*`?\s*[0-9,/-]+/i, '').trim();
+                        color = afterMrp.split(' ')[0] + (afterMrp.split(' ')[1] ? " " + afterMrp.split(' ')[1] : "");
+                        if (color.match(/[0-9]/)) color = "";
                     }
-                    currentProduct = {
-                        productCode: codeNameMatch[1].trim(),
-                        productName: codeNameMatch[2].trim(),
-                        rate: 0, size: '', color: ''
+                }
+
+                const suffixMatch = code.match(/^\d{4}\s+([A-Z]{2,3})$/);
+                const suffix = suffixMatch ? suffixMatch[1] : null;
+
+                if (code.startsWith('1330')) {
+                    const isCarrara = code.includes('CM') || color.toLowerCase().includes('marble');
+                    const knobColorMatch = code.match(/1330\s*([A-Z]{2})/);
+                    const knobSuffix = knobColorMatch ? knobColorMatch[1] : (isCarrara ? 'CM' : '');
+
+                    const knobColorMap = {
+                        'CI': 'Crystal Ice',
+                        'GB': 'Glacier Blue',
+                        'IR': 'Inferno Red',
+                        'MT': 'Mystical Turquoise',
+                        'GS': 'Graphite Smoke',
+                        'AO': 'Amber Orange',
+                        'CM': 'Carrara Marble'
                     };
-                } else if (currentProduct) {
-                    if (currentProduct.productCode === '9272') console.log(`[Page ${i}] 9272 TEXT PARSE: ${text}`);
-                    if (text.toLowerCase().startsWith('size') || text.toLowerCase().includes('mm')) {
-                        const parts = text.split(':');
-                        currentProduct.size = parts.length > 1 ? parts[1].trim() : text.trim();
-                    } else if (text.toLowerCase().includes('mrp')) {
-                        const rpPart = text.replace(/[^0-9]/g, '');
-                        if (rpPart) currentProduct.rate = parseInt(rpPart, 10);
-                    } else if (currentProduct.rate > 0 && !currentProduct.color && text.length < 40 && !text.match(/^[0-9]+$/)) {
-                        if (!text.toLowerCase().includes('mrp') && !text.toLowerCase().includes('size')) {
-                            currentProduct.color = text.trim();
-                            if (currentProduct.productCode === '9272') console.log(`[Page ${i}] PUSH 9272 from color block`);
-                            products.push({ ...currentProduct });
-                            currentProduct = null;
-                        }
-                    }
+
+                    let imgPath = `/catalog/aquant_images/1330_${knobSuffix}.jpg`;
+
+                    const knobColorTotal = knobColorMap[knobSuffix] || colorMap[knobSuffix] || color;
+                    const finalKnobName = isCarrara ? "Italian Stone Carrara Marble Knobs (set of 2)" : "Original Crystal Knobs Handmade In Italy (set of 2)";
+
+                    allProducts.push({
+                        productCode: `1330 ${knobSuffix}`,
+                        productName: `1330 ${knobSuffix} - ${knobColorTotal} ${finalKnobName}`.trim(),
+                        rate,
+                        size,
+                        color: knobColorTotal.trim().replace(/:/g, ''),
+                        image: imgPath
+                    });
+                } else if (baseCode && slicedCodes.has(baseCode) && suffix) {
+                    const fullColor = colorMap[suffix] || suffix;
+                    const finalDesc = baseDescriptions.get(baseCode)?.name || name;
+
+                    allProducts.push({
+                        productCode: code,
+                        productName: `${code} - ${fullColor} ${finalDesc}`.trim().replace(/\s+/g, ' '),
+                        rate,
+                        size,
+                        color: fullColor,
+                        image: `/catalog/aquant_images/${baseCode}_${suffix}.jpg`
+                    });
+                } else {
+                    allProducts.push({
+                        productCode: code,
+                        productName: name || (baseDescriptions.get(baseCode)?.name || ""),
+                        rate,
+                        size: size || (baseDescriptions.get(baseCode)?.size || ""),
+                        color: color.trim().replace(/:/g, ''),
+                        image: `/catalog/aquant_images/${code.replace(/[^a-zA-Z0-9]/g, '_')}.jpg`
+                    });
                 }
             }
-            if (currentProduct && currentProduct.productCode && currentProduct.rate > 0) {
-                if (currentProduct.productCode === '9272') console.log(`[Page ${i}] PUSH 9272 from end of col block`);
-                products.push({ ...currentProduct });
-            }
         }
     }
 
-    const uniqueProductsMap = new Map();
-    for (const p of products) {
-        if (!uniqueProductsMap.has(p.productCode) || uniqueProductsMap.get(p.productCode).rate === 0) {
-            uniqueProductsMap.set(p.productCode, p);
-        }
+    const unique = new Map();
+    for (const p of allProducts) {
+        if (!unique.has(p.productCode)) unique.set(p.productCode, p);
     }
-    const uniqueProducts = Array.from(uniqueProductsMap.values());
+    const final = Array.from(unique.values()).map((p, i) => ({ id: String(i + 1), ...p }));
 
-    const finalProducts = uniqueProducts.map((p, index) => ({
-        id: String(index + 1),
-        ...p,
-        image: "" // Add image field as blank for now
-    }));
+    final.push({ id: (final.length + 1).toString(), productCode: '1870 W - Seat', productName: '1870 W - Seat Extra Intelligent Toilet Seat for 1870 W', rate: 140000, size: '', color: 'White', image: '/catalog/aquant_images/1870_W_Seat.jpg' });
+    final.push({ id: (final.length + 2).toString(), productCode: '1870 W - Doorbell', productName: '1870 W - Doorbell Extra Doorbell Remote for 1870 W', rate: 9500, size: '', color: '', image: '/catalog/aquant_images/1870_W_Doorbell.jpg' });
+    final.push({ id: (final.length + 3).toString(), productCode: '1870 W - Remote', productName: '1870 W - Remote Extra Intelligent Toilet Remote for 1870 W', rate: 7500, size: '', color: '', image: '/catalog/aquant_images/1870_W_Remote.jpg' });
 
-    // Sort by code roughly
-    finalProducts.sort((a, b) => a.productCode.localeCompare(b.productCode));
-
-    const final9272 = finalProducts.find(p => p.productCode === '9272');
-    console.log("FINAL 9272 STATUS:", final9272 ? "FOUND" : "NOT FOUND", final9272);
-
-    fs.writeFileSync('./src/data/aquant_products.json', JSON.stringify(finalProducts, null, 2));
-    console.log(`Extracted ${finalProducts.length} Aquant products.`);
+    final.sort((a, b) => a.productCode.localeCompare(b.productCode));
+    fs.writeFileSync('./src/data/aquant_products.json', JSON.stringify(final, null, 2));
+    console.log(`Extracted ${final.length} Aquant products.`);
 };
 
 extractData().catch(console.error);

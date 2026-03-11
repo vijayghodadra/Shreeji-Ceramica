@@ -53,4 +53,6 @@ export interface SavedQuotation {
   commonDiscountPercentage: number;
   globalDiscountAmount: number;
   totals: QuoteCalculations;
+  preparedBy?: string;
+  status?: 'CREATED' | 'PREPARED' | 'FINALIZED';
 }

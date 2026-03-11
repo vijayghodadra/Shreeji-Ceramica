@@ -19,6 +19,30 @@ const ROOM_OPTIONS = [
     { value: 'Utility Room', label: 'Utility Room' },
 ];
 
+const matchesProductSearch = (product: any, searchTerm: string): boolean => {
+    if (!searchTerm || !product) return true;
+    const searchLower = searchTerm.toLowerCase().trim();
+    if (!searchLower) return true;
+
+    const matchCode = product.productCode?.toLowerCase() || '';
+    const matchName = product.productName?.toLowerCase() || '';
+    const matchColor = product.color?.toLowerCase() || '';
+    const matchSize = product.size?.toLowerCase() || '';
+
+    // Direct substring match first
+    if (matchCode.includes(searchLower) || matchName.includes(searchLower)) {
+        return true;
+    }
+
+    // Multi-token match for things like "1003 G - Gold"
+    const searchTerms = searchLower.split(/[\s-]+/).filter(t => t.length > 0);
+    if (searchTerms.length === 0) return false;
+
+    const fullText = `${matchCode} ${matchName} ${matchColor} ${matchSize}`;
+    return searchTerms.every(term => fullText.includes(term));
+};
+
+
 interface ProductTableProps {
     products: ProductDetails[];
     setProducts: React.Dispatch<React.SetStateAction<ProductDetails[]>>;
@@ -163,274 +187,194 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             onBlur={() => setTimeout(() => setShowGlobalSuggestions(false), 200)}
                         />
                     </div>
-                    {showGlobalSuggestions && (globalSearch.length > 1) && (
-                        <div className="suggestions-dropdown glass-premium" style={{ maxHeight: '400px' }}>
-                            {activeBrand === 'KOHLER' ? (
-                                <>
-                                    {[
-                                        { title: 'Smart Toilets & Bidets', keywords: ['Toilet', 'Bidet', 'Cleansing', 'PureWash', 'C3-', 'Veil', 'Innate', 'Leap'] },
-                                        { title: 'Faucets & Fittings', keywords: ['Faucet', 'Tap', 'Mixer', 'Handle', 'Spout'] },
-                                        { title: 'Showers & Bath', keywords: ['Shower', 'Bath', 'Valve', 'Trim'] },
-                                        { title: 'Other Products', keywords: [] }
-                                    ].map((cat, catIdx) => {
-                                        const filtered = kohlerCatalog.filter(c => {
-                                            const matchCode = c.productCode?.toLowerCase() || '';
-                                            const matchName = c.productName?.toLowerCase() || '';
-                                            const searchLower = globalSearch.toLowerCase();
-                                            const matchesSearch = matchCode.includes(searchLower) || matchName.includes(searchLower);
-                                            if (!matchesSearch) return false;
-
-                                            if (cat.keywords.length === 0) {
-                                                // "Other" category: check if it doesn't match any other categories
-                                                const matchesOtherCat = ['Toilet', 'Bidet', 'Faucet', 'Mixer', 'Shower', 'Bath'].some(k =>
-                                                    c.productName.toLowerCase().includes(k.toLowerCase())
+                                        {showGlobalSuggestions && (globalSearch.length > 1) && (
+                        <div className="suggestions-dropdown glass-premium" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                            {(() => {
+                                const renderProductItem = (c: any, keyMap: string) => (
+                                    <div
+                                        key={keyMap}
+                                        className="suggestion-item"
+                                        onClick={() => {
+                                            const newPrd: ProductDetails = {
+                                                id: crypto.randomUUID(),
+                                                productCode: c.productCode,
+                                                productName: c.productName,
+                                                image: c.image || '',
+                                                rate: c.rate,
+                                                quantity: 1,
+                                                size: c.size || '',
+                                                color: c.color || '',
+                                                discountPercentage: discountMode === 'COMMON' ? commonDiscountPercentage : 0,
+                                                discountAmount: 0,
+                                                amountBeforeDiscount: 0,
+                                                finalAmount: 0
+                                            };
+                                            if (discountMode === 'COMMON') {
+                                                const { amountBeforeDiscount, discountAmount, finalAmount } = calculateProductTotals(
+                                                    newPrd.quantity,
+                                                    newPrd.rate,
+                                                    commonDiscountPercentage
                                                 );
-                                                return !matchesOtherCat;
+                                                newPrd.amountBeforeDiscount = amountBeforeDiscount;
+                                                newPrd.discountAmount = discountAmount;
+                                                newPrd.finalAmount = finalAmount;
                                             }
-
-                                            const searchTarget = matchName + ' ' + matchCode;
-                                            return cat.keywords.some(k => searchTarget.includes(k.toLowerCase()));
-                                        }).slice(0, 15);
-
-                                        if (filtered.length === 0) return null;
-
-                                        return (
-                                            <div key={`cat-${catIdx}`}>
-                                                <div className="p-2 bg-gray-50 text-[10px] font-bold text-muted uppercase flex items-center gap-1 border-b border-gray-100">
-                                                    <Box size={10} /> {cat.title}
+                                            setProducts([...products, newPrd]);
+                                            setGlobalSearch('');
+                                            setShowGlobalSuggestions(false);
+                                        }}
+                                    >
+                                        <div className="suggestion-img-wrapper">
+                                            {c.image ? (
+                                                <img src={c.image} alt={c.productCode} />
+                                            ) : (
+                                                <Database size={24} className="text-muted opacity-20" />
+                                            )}
+                                        </div>
+                                        <div className="suggestion-info">
+                                            <div className="suggestion-header">
+                                                <span className="suggestion-code">{c.productCode}</span>
+                                                <span className="suggestion-price">{formatCurrency(c.rate)}</span>
+                                            </div>
+                                            <div className="suggestion-name">{c.productName}</div>
+                                            {(c.size || c.color) && (
+                                                <div className="suggestion-meta">
+                                                    {c.size && <span>Size: {c.size}</span>}
+                                                    {c.size && c.color && <span className="mx-1">|</span>}
+                                                    {c.color && <span>Color: {c.color}</span>}
                                                 </div>
-                                                {filtered.map((c: any, i) => (
-                                                    <div
-                                                        key={`glob-${catIdx}-${i}`}
-                                                        className="suggestion-item p-2 hover:bg-blue-50 cursor-pointer text-sm flex gap-3 items-center border-b border-gray-100"
-                                                        onClick={() => {
-                                                            const newPrd: ProductDetails = {
-                                                                id: crypto.randomUUID(),
-                                                                productCode: c.productCode,
-                                                                productName: c.productName,
-                                                                image: c.image || '',
-                                                                rate: c.rate,
-                                                                quantity: 1,
-                                                                size: c.size || '',
-                                                                color: c.color || '',
-                                                                discountPercentage: discountMode === 'COMMON' ? commonDiscountPercentage : 0,
-                                                                discountAmount: 0,
-                                                                amountBeforeDiscount: 0,
-                                                                finalAmount: 0
-                                                            };
-                                                            if (discountMode === 'COMMON') {
-                                                                const { amountBeforeDiscount, discountAmount, finalAmount } = calculateProductTotals(
-                                                                    newPrd.quantity,
-                                                                    newPrd.rate,
-                                                                    commonDiscountPercentage
-                                                                );
-                                                                newPrd.amountBeforeDiscount = amountBeforeDiscount;
-                                                                newPrd.discountAmount = discountAmount;
-                                                                newPrd.finalAmount = finalAmount;
-                                                            }
-                                                            setProducts([...products, newPrd]);
-                                                            setGlobalSearch('');
-                                                            setShowGlobalSuggestions(false);
-                                                        }}
-                                                    >
-                                                        {c.image ? (
-                                                            <div className="w-10 h-10 min-w-[2.5rem] bg-white rounded border border-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                                                                <img src={c.image} alt={c.productCode} className="w-full h-full object-contain" />
-                                                            </div>
-                                                        ) : (
-                                                            <div className="w-10 h-10 min-w-[2.5rem] bg-gray-50 rounded border border-gray-100 flex items-center justify-center text-muted flex-shrink-0">
-                                                                <Database size={14} />
-                                                            </div>
-                                                        )}
-                                                        <div className="flex-grow min-w-0">
-                                                            <div className="font-bold text-primary flex justify-between items-center text-xs">
-                                                                <span className="truncate mr-2">{c.productCode}</span>
-                                                                <span className="text-secondary flex-shrink-0">{formatCurrency(c.rate)}</span>
-                                                            </div>
-                                                            <div className="text-muted text-[10px] truncate">{c.productName}</div>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+
+                                const isKohler = activeBrand === 'KOHLER';
+                                const mainCatalog = isKohler ? kohlerCatalog : aquantCatalog;
+                                const inactiveBrandStr = isKohler ? 'AQUANT' : 'KOHLER';
+                                const inactiveCatalog = isKohler ? aquantCatalog : kohlerCatalog;
+                                
+                                const searchLower = globalSearch.toLowerCase().trim();
+                                
+                                // First check for EXACT code match
+                                const exactMatch = mainCatalog.find(c => c.productCode?.toLowerCase().trim() === searchLower);
+                                
+                                if (exactMatch) {
+                                    return (
+                                        <div>
+                                            <div className="p-2 bg-green-50 text-[10px] font-bold text-green-700 uppercase flex items-center gap-1 border-b border-green-100">
+                                                <Box size={10} /> Exact Model Match
+                                            </div>
+                                            {renderProductItem(exactMatch, 'exact-1')}
+                                        </div>
+                                    );
+                                }
+
+                                // If no exact match, proceed with category mapping
+                                const cats = isKohler ? [
+                                    { title: 'Smart Toilets & Bidets', keywords: ['Toilet', 'Bidet', 'Cleansing', 'PureWash', 'C3-', 'Veil', 'Innate', 'Leap'] },
+                                    { title: 'Faucets & Fittings', keywords: ['Faucet', 'Tap', 'Mixer', 'Handle', 'Spout'] },
+                                    { title: 'Showers & Bath', keywords: ['Shower', 'Bath', 'Valve', 'Trim'] },
+                                    { title: 'Other Products', keywords: [] }
+                                ] : [
+                                    { title: 'Stone & Concrete Basins', keywords: ['Basin', 'Concrete', 'Carrara', 'Marble'] },
+                                    { title: 'Toilets', keywords: ['Toilet', 'WC', 'Urinal', 'Concealed'] },
+                                    { title: 'Showers & Drains', keywords: ['Shower', 'Drain', 'Jet', 'Rain'] },
+                                    { title: 'Mixers & Faucets', keywords: ['Mixer', 'Spout', 'Cock', 'Tap', 'Knobs'] },
+                                    { title: 'Other Products', keywords: [] }
+                                ];
+
+                                const mainResults = cats.map((cat, catIdx) => {
+                                    const filtered = mainCatalog.filter(c => {
+                                        const matchesSearch = matchesProductSearch(c, globalSearch);
+                                        if (!matchesSearch) return false;
+
+                                        const searchTarget = (c.productName || '') + ' ' + (c.productCode || '');
+                                        if (cat.keywords.length === 0) {
+                                            const matchesOtherCat = isKohler 
+                                                ? ['Toilet', 'Bidet', 'Faucet', 'Mixer', 'Shower', 'Bath'].some(k => searchTarget.toLowerCase().includes(k.toLowerCase()))
+                                                : ['Basin', 'Concrete', 'Carrara', 'Marble', 'Toilet', 'WC', 'Urinal', 'Concealed', 'Shower', 'Drain', 'Jet', 'Rain', 'Mixer', 'Spout', 'Cock', 'Tap', 'Knobs'].some(k => searchTarget.toLowerCase().includes(k.toLowerCase()));
+                                            return !matchesOtherCat;
+                                        }
+
+                                        return cat.keywords.some(k => searchTarget.toLowerCase().includes(k.toLowerCase()));
+                                    }).sort((a: any, b: any) => {
+                                        const aCode = (a.productCode || '').toLowerCase();
+                                        const bCode = (b.productCode || '').toLowerCase();
+                                        const aPrefix = aCode.startsWith(searchLower);
+                                        const bPrefix = bCode.startsWith(searchLower);
+                                        if (aPrefix && !bPrefix) return -1;
+                                        if (!aPrefix && bPrefix) return 1;
+                                        return 0;
+                                    }).slice(0, 15);
+
+                                    if (filtered.length === 0) return null;
+
+                                    return (
+                                        <div key={`cat-${catIdx}`}>
+                                            <div className="p-2 bg-gray-50 text-[10px] font-bold text-muted uppercase flex items-center gap-1 border-b border-gray-100">
+                                                <Box size={10} /> {cat.title}
+                                            </div>
+                                            {filtered.map((c: any, i) => renderProductItem(c, `glob-${catIdx}-${i}`))}
+                                        </div>
+                                    );
+                                });
+
+                                // Check inactive catalog
+                                const inactiveExactMatch = inactiveCatalog.find(c => c.productCode?.toLowerCase().trim() === searchLower);
+                                let inactiveResults = null;
+
+                                if (inactiveExactMatch) {
+                                    inactiveResults = (
+                                        <div key="cross-brand-matches" className="mt-2 border-t border-gray-100">
+                                            <div className="p-2 bg-blue-50 text-[10px] font-bold text-blue-700 uppercase flex items-center gap-1 border-b border-blue-100">
+                                                <Search size={10} /> Exact {inactiveBrandStr} Match
+                                            </div>
+                                            {renderProductItem(inactiveExactMatch, 'cross-exact-1')}
+                                        </div>
+                                    );
+                                } else {
+                                    const inactiveMatches = inactiveCatalog.filter(c => {
+                                        return matchesProductSearch(c, globalSearch);
+                                    }).sort((a: any, b: any) => {
+                                        const aCode = (a.productCode || '').toLowerCase();
+                                        const bCode = (b.productCode || '').toLowerCase();
+                                        const aPrefix = aCode.startsWith(searchLower);
+                                        const bPrefix = bCode.startsWith(searchLower);
+                                        if (aPrefix && !bPrefix) return -1;
+                                        if (!aPrefix && bPrefix) return 1;
+                                        return 0;
+                                    }).slice(0, 15);
+
+                                    if (inactiveMatches.length > 0) {
+                                        inactiveResults = (
+                                            <div key="cross-brand-matches" className="mt-2 border-t border-gray-100">
+                                                <div className="p-2 bg-blue-50 text-[10px] font-bold text-blue-700 uppercase flex items-center gap-1 border-b border-blue-100">
+                                                    <Search size={10} /> {inactiveBrandStr} Matches
+                                                </div>
+                                                {inactiveMatches.map((c: any, i) => renderProductItem(c, `cross-glob-${i}`))}
                                             </div>
                                         );
-                                    })}
-                                </>
-                            ) : (
-                                activeBrand === 'AQUANT' ? (
-                                    <>
-                                        {[
-                                            { title: 'Stone & Concrete Basins', keywords: ['Basin', 'Concrete', 'Carrara', 'Marble'] },
-                                            { title: 'Toilets', keywords: ['Toilet', 'WC', 'Urinal', 'Concealed'] },
-                                            { title: 'Showers & Drains', keywords: ['Shower', 'Drain', 'Jet', 'Rain'] },
-                                            { title: 'Mixers & Faucets', keywords: ['Mixer', 'Spout', 'Cock', 'Tap'] },
-                                            { title: 'Other Products', keywords: [] }
-                                        ].map((cat, catIdx) => {
-                                            const filtered = aquantCatalog.filter(c => {
-                                                const matchCode = c.productCode?.toLowerCase() || '';
-                                                const matchName = c.productName?.toLowerCase() || '';
-                                                const searchLower = globalSearch.toLowerCase();
-                                                const matchesSearch = matchCode.includes(searchLower) || matchName.includes(searchLower);
-                                                if (!matchesSearch) return false;
+                                    }
+                                }
 
-                                                if (cat.keywords.length === 0) {
-                                                    const matchesOtherCat = ['Basin', 'Concrete', 'Carrara', 'Marble', 'Toilet', 'WC', 'Urinal', 'Concealed', 'Shower', 'Drain', 'Jet', 'Rain', 'Mixer', 'Spout', 'Cock', 'Tap'].some(k =>
-                                                        (matchName + ' ' + matchCode).includes(k.toLowerCase())
-                                                    );
-                                                    return !matchesOtherCat;
-                                                }
-
-                                                return cat.keywords.some(k => (matchName + ' ' + matchCode).includes(k.toLowerCase()));
-                                            }).slice(0, 15);
-
-                                            if (filtered.length === 0) return null;
-
-                                            return (
-                                                <div key={`aq-cat-${catIdx}`}>
-                                                    <div className="p-2 bg-gray-50 text-[10px] font-bold text-muted uppercase flex items-center gap-1 border-b border-gray-100">
-                                                        <Box size={10} /> {cat.title}
-                                                    </div>
-                                                    {filtered.map((c: any, i) => (
-                                                        <div
-                                                            key={`glob-aq-${catIdx}-${i}`}
-                                                            className="suggestion-item p-2 hover:bg-blue-50 cursor-pointer text-sm flex gap-3 items-center border-b border-gray-100"
-                                                            onClick={() => {
-                                                                const newPrd: ProductDetails = {
-                                                                    id: crypto.randomUUID(),
-                                                                    productCode: c.productCode,
-                                                                    productName: c.productName,
-                                                                    image: c.image || '',
-                                                                    rate: c.rate,
-                                                                    quantity: 1,
-                                                                    size: c.size || '',
-                                                                    color: c.color || '',
-                                                                    discountPercentage: discountMode === 'COMMON' ? commonDiscountPercentage : 0,
-                                                                    discountAmount: 0,
-                                                                    amountBeforeDiscount: 0,
-                                                                    finalAmount: 0
-                                                                };
-                                                                if (discountMode === 'COMMON') {
-                                                                    const { amountBeforeDiscount, discountAmount, finalAmount } = calculateProductTotals(
-                                                                        newPrd.quantity,
-                                                                        newPrd.rate,
-                                                                        commonDiscountPercentage
-                                                                    );
-                                                                    newPrd.amountBeforeDiscount = amountBeforeDiscount;
-                                                                    newPrd.discountAmount = discountAmount;
-                                                                    newPrd.finalAmount = finalAmount;
-                                                                }
-                                                                setProducts([...products, newPrd]);
-                                                                setGlobalSearch('');
-                                                                setShowGlobalSuggestions(false);
-                                                            }}
-                                                        >
-                                                            {c.image ? (
-                                                                <div className="w-10 h-10 min-w-[2.5rem] bg-white rounded border border-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                                                                    <img src={c.image} alt={c.productCode} className="w-full h-full object-contain" />
-                                                                </div>
-                                                            ) : (
-                                                                <div className="w-10 h-10 min-w-[2.5rem] bg-gray-50 rounded border border-gray-100 flex items-center justify-center text-muted flex-shrink-0">
-                                                                    <Database size={14} />
-                                                                </div>
-                                                            )}
-                                                            <div className="flex-grow min-w-0">
-                                                                <div className="font-bold text-primary flex justify-between items-center text-xs">
-                                                                    <span className="truncate mr-2">{c.productCode}</span>
-                                                                    <span className="text-secondary flex-shrink-0">{formatCurrency(c.rate)}</span>
-                                                                </div>
-                                                                <div className="text-muted text-[10px] truncate">{c.productName}</div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            );
-                                        })}
-                                    </>
-                                ) : (
-                                    <div className="p-8 text-center text-muted">
-                                        <Box size={32} className="mx-auto mb-2 opacity-20" />
-                                        <p className="text-sm font-bold">AQUANT Catalog Empty</p>
-                                        <p className="text-xs">No products currently loaded for Aquant Brand.</p>
-                                    </div>
-                                )
-                            )}
-
-                            {(() => {
-                                const isKohler = activeBrand === 'KOHLER';
-                                const inactiveBrand = isKohler ? 'AQUANT' : 'KOHLER';
-                                const inactiveCatalog = isKohler ? aquantCatalog : kohlerCatalog;
-
-                                const searchLower = globalSearch.toLowerCase();
-                                const inactiveMatches = inactiveCatalog.filter(c => {
-                                    const matchCode = c.productCode?.toLowerCase() || '';
-                                    const matchName = c.productName?.toLowerCase() || '';
-                                    return matchCode.includes(searchLower) || matchName.includes(searchLower);
-                                }).slice(0, 10);
-
-                                if (inactiveMatches.length === 0) return null;
-
+                                const hasMainResults = mainResults.some(r => r !== null);
+                                
                                 return (
-                                    <div key="cross-brand-matches" className="mt-2 border-t border-gray-100">
-                                        <div className="p-2 bg-blue-50 text-[10px] font-bold text-blue-700 uppercase flex items-center gap-1 border-b border-blue-100">
-                                            <Search size={10} /> {inactiveBrand} Matches
-                                        </div>
-                                        {inactiveMatches.map((c: any, i) => (
-                                            <div
-                                                key={`cross-glob-${i}`}
-                                                className="suggestion-item p-2 hover:bg-blue-50 cursor-pointer text-sm flex gap-3 items-center border-b border-gray-50"
-                                                onClick={() => {
-                                                    const newPrd: ProductDetails = {
-                                                        id: crypto.randomUUID(),
-                                                        productCode: c.productCode,
-                                                        productName: c.productName,
-                                                        image: c.image || '',
-                                                        rate: c.rate,
-                                                        quantity: 1,
-                                                        size: c.size || '',
-                                                        color: c.color || '',
-                                                        discountPercentage: discountMode === 'COMMON' ? commonDiscountPercentage : 0,
-                                                        discountAmount: 0,
-                                                        amountBeforeDiscount: 0,
-                                                        finalAmount: 0
-                                                    };
-                                                    if (discountMode === 'COMMON') {
-                                                        const { amountBeforeDiscount, discountAmount, finalAmount } = calculateProductTotals(
-                                                            newPrd.quantity,
-                                                            newPrd.rate,
-                                                            commonDiscountPercentage
-                                                        );
-                                                        newPrd.amountBeforeDiscount = amountBeforeDiscount;
-                                                        newPrd.discountAmount = discountAmount;
-                                                        newPrd.finalAmount = finalAmount;
-                                                    }
-                                                    setProducts([...products, newPrd]);
-                                                    setGlobalSearch('');
-                                                    setShowGlobalSuggestions(false);
-                                                }}
-                                            >
-                                                {c.image ? (
-                                                    <div className="w-10 h-10 min-w-[2.5rem] bg-white rounded border border-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                                                        <img src={c.image} alt={c.productCode} className="w-full h-full object-contain" />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-10 h-10 min-w-[2.5rem] bg-gray-50 rounded border border-gray-100 flex items-center justify-center text-muted flex-shrink-0">
-                                                        <Database size={14} />
-                                                    </div>
-                                                )}
-                                                <div className="flex-grow min-w-0">
-                                                    <div className="font-bold text-primary flex justify-between items-center text-xs">
-                                                        <span className="truncate mr-2">{c.productCode}</span>
-                                                        <span className="text-secondary flex-shrink-0">{formatCurrency(c.rate)}</span>
-                                                    </div>
-                                                    <div className="text-muted text-[10px] truncate">{c.productName}</div>
-                                                </div>
+                                    <>
+                                        {hasMainResults ? mainResults : (
+                                            <div className="p-8 text-center text-muted">
+                                                <Box size={32} className="mx-auto mb-2 opacity-20" />
+                                                <p className="text-sm font-bold">No results in {activeBrand}</p>
+                                                <p className="text-xs">Try searching in another category or using partial names.</p>
                                             </div>
-                                        ))}
-                                    </div>
+                                        )}
+                                        {inactiveResults}
+                                    </>
                                 );
                             })()}
                         </div>
                     )}
-                </div>
+               </div>
 
                 <button className="btn btn-primary btn-sm flex-shrink-0 w-full md:w-auto justify-center" onClick={addProduct}>
                     <Plus size={16} /> Add Product
@@ -495,15 +439,15 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     {activeRowId === product.id && (
                                         <div className="suggestions-dropdown glass-premium" style={{ left: 0, width: 'max-content', maxWidth: '85vw', minWidth: '250px' }}>
                                             {history.filter(h =>
-                                                h.productCode?.toLowerCase().includes(product.productCode.toLowerCase()) ||
-                                                h.productName?.toLowerCase().includes(product.productName.toLowerCase())
+                                                matchesProductSearch(h, product.productCode) ||
+                                                matchesProductSearch(h, product.productName)
                                             ).length > 0 && (
                                                     <div className="p-2 bg-gray-50 text-xs font-bold text-muted uppercase flex items-center gap-1">
                                                         <Box size={10} /> Recent Items
                                                     </div>
                                                 )}
                                             {history
-                                                .filter(h => h.productCode?.toLowerCase().includes(product.productCode.toLowerCase()) || h.productName?.toLowerCase().includes(product.productName.toLowerCase()))
+                                                .filter(h => matchesProductSearch(h, product.productCode) || matchesProductSearch(h, product.productName))
                                                 .map((h, i) => (
                                                     <div
                                                         key={`hist-${i}`}
@@ -526,35 +470,37 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                                     </div>
                                                     {(activeBrand === 'AQUANT' ? aquantCatalog : kohlerCatalog)
                                                         .filter(c => {
-                                                            const catCode = c.productCode?.toLowerCase() || '';
-                                                            const catName = c.productName?.toLowerCase() || '';
-                                                            const pCode = product.productCode?.toLowerCase() || '';
-                                                            const pName = product.productName?.toLowerCase() || '';
-                                                            return catCode.includes(pCode) || catName.includes(pName);
+                                                            const pCodeMatch = product.productCode ? matchesProductSearch(c, product.productCode) : false;
+                                                            const pNameMatch = product.productName ? matchesProductSearch(c, product.productName) : false;
+                                                            return (product.productCode && pCodeMatch) || (product.productName && pNameMatch) || (!product.productCode && !product.productName);
                                                         })
                                                         .slice(0, 15)
                                                         .map((c: any, i) => (
                                                             <div
                                                                 key={`cat-${i}`}
-                                                                className="suggestion-item p-2 hover:bg-blue-50 cursor-pointer text-sm flex gap-3 items-center"
-                                                                style={{ padding: '0.6rem 0.75rem', borderBottom: '1px solid #f1f5f9', cursor: 'pointer' }}
+                                                                className="suggestion-item"
                                                                 onClick={() => handleSelectSuggestion(product.id, c)}
                                                             >
-                                                                {c.image ? (
-                                                                    <div className="w-12 h-12 min-w-[3rem] bg-white rounded border border-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                                                                        <img src={c.image} alt={c.productCode} className="w-full h-full object-contain" />
+                                                                <div className="suggestion-img-wrapper">
+                                                                    {c.image ? (
+                                                                        <img src={c.image} alt={c.productCode} />
+                                                                    ) : (
+                                                                        <Database size={24} className="text-muted opacity-20" />
+                                                                    )}
+                                                                </div>
+                                                                <div className="suggestion-info">
+                                                                    <div className="suggestion-header">
+                                                                        <span className="suggestion-code">{c.productCode}</span>
+                                                                        <span className="suggestion-price">{formatCurrency(c.rate)}</span>
                                                                     </div>
-                                                                ) : (
-                                                                    <div className="w-12 h-12 min-w-[3rem] bg-blue-50 rounded border border-blue-100 flex items-center justify-center text-primary-light flex-shrink-0">
-                                                                        <Database size={16} />
-                                                                    </div>
-                                                                )}
-                                                                <div className="flex-grow">
-                                                                    <div className="font-bold text-primary flex justify-between">
-                                                                        <span>{c.productCode}</span>
-                                                                        <span className="text-secondary font-bold">{formatCurrency(c.rate)}</span>
-                                                                    </div>
-                                                                    <div className="text-muted text-xs line-clamp-2">{c.productName}</div>
+                                                                    <div className="suggestion-name">{c.productName}</div>
+                                                                    {(c.size || c.color) && (
+                                                                        <div className="suggestion-meta">
+                                                                            {c.size && <span>Size: {c.size}</span>}
+                                                                            {c.size && c.color && <span className="mx-1">|</span>}
+                                                                            {c.color && <span>Color: {c.color}</span>}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -631,17 +577,16 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     {formatCurrency(product.finalAmount)}
                                 </td>
                                 <td style={{ padding: '0.4rem 0.3rem' }}>
-                                    <select
+                                    <input
+                                        type="text"
+                                        list="room-options"
                                         className="input-field-warm w-full text-xs"
                                         style={{ padding: '0.3rem 0.2rem', fontSize: '0.7rem' }}
+                                        placeholder="Room"
                                         value={product.room || ''}
                                         onChange={(e) => updateProduct(product.id, 'room', e.target.value)}
-                                        title="Assign Room"
-                                    >
-                                        {ROOM_OPTIONS.map(r => (
-                                            <option key={r.value} value={r.value}>{r.label}</option>
-                                        ))}
-                                    </select>
+                                        title="Assign Room or type custom"
+                                    />
                                 </td>
                                 <td className="text-center" style={{ padding: '0.4rem 0.3rem' }}>
                                     <button
@@ -657,6 +602,11 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                         ))}
                     </tbody>
                 </table>
+                <datalist id="room-options">
+                    {ROOM_OPTIONS.filter(r => r.value !== '').map(r => (
+                        <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                </datalist>
             </div>
 
             {/* Mobile Card View */}
@@ -763,15 +713,14 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             </div>
                             <div className="px-4 pb-3">
                                 <label className="input-label text-[10px] mb-1">Room</label>
-                                <select
+                                <input
+                                    type="text"
+                                    list="room-options"
                                     className="input-field-warm w-full text-xs"
+                                    placeholder="Room"
                                     value={product.room || ''}
                                     onChange={(e) => updateProduct(product.id, 'room', e.target.value)}
-                                >
-                                    {ROOM_OPTIONS.map(r => (
-                                        <option key={r.value} value={r.value}>{r.label}</option>
-                                    ))}
-                                </select>
+                                />
                             </div>
                         </div>
                     ))

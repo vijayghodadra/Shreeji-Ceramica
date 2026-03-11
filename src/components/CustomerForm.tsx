@@ -1,6 +1,7 @@
-import React from 'react';
-import { User, Percent, UserCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Percent, UserCheck, Sparkles, Database } from 'lucide-react';
 import type { CustomerDetails } from '../types';
+import { getCustomerHistory } from '../utils/storage';
 
 const PREPARED_BY_OPTIONS = [
     { label: '— Select —', value: '' },
@@ -30,8 +31,49 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
     preparedBy,
     onPreparedByChange,
 }) => {
+    const [history, setHistory] = useState<CustomerDetails[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [aiAutofilled, setAiAutofilled] = useState(false);
+
+    useEffect(() => {
+        setHistory(getCustomerHistory());
+    }, []);
+
+    const handlePhoneChange = (val: string) => {
+        onChange('phone', val);
+        setShowSuggestions(true);
+
+        // Check for exact match to auto-fill (AI Feature)
+        const exactMatch = history.find(h => h.phone === val);
+        if (exactMatch) {
+            handleSelectCustomer(exactMatch);
+        }
+    };
+
+    const handleSelectCustomer = (selected: CustomerDetails) => {
+        if (selected.customerName && selected.customerName !== customer.customerName) onChange('customerName', selected.customerName);
+        if (selected.email && selected.email !== customer.email) onChange('email', selected.email);
+        if (selected.address && selected.address !== customer.address) onChange('address', selected.address);
+        // We use customerName for Company / Name, but if there's a company name field, update it too
+        if ((selected as any).companyName && (selected as any).companyName !== (customer as any).companyName) onChange('companyName' as keyof CustomerDetails, (selected as any).companyName);
+        if ((selected as any).gstNumber && (selected as any).gstNumber !== (customer as any).gstNumber) onChange('gstNumber' as keyof CustomerDetails, (selected as any).gstNumber);
+
+        onChange('phone', selected.phone);
+        setShowSuggestions(false);
+        setAiAutofilled(true);
+        setTimeout(() => setAiAutofilled(false), 3000);
+    };
+
+    const filteredHistory = history.filter(h => h.phone.includes(customer.phone) && h.phone !== customer.phone).slice(0, 5);
+
     return (
         <div className="liquid-glass-warm p-8 animate-reveal-up relative overflow-visible">
+            {aiAutofilled && (
+                <div className="absolute top-4 right-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 animate-fade-in shadow-lg z-50">
+                    <Sparkles size={14} className="animate-pulse" />
+                    AI Auto-filled from History
+                </div>
+            )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                 <h2 className="panel-title flex-shrink-0" style={{ margin: 0 }}><User size={20} className="text-secondary" /> Client Information</h2>
                 {/* Prepared By Dropdown */}
@@ -51,12 +93,12 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="flex flex-col gap-1">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 relative" style={{ zIndex: 20 }}>
+                <div className="flex flex-col gap-1 relative" style={{ zIndex: 10 }}>
                     <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Client Name / Business</label>
-                    <textarea
-                        className="input-field-warm w-full resize-y"
-                        rows={1}
+                    <input
+                        type="text"
+                        className={`input-field-warm w-full transition-all duration-300 ${aiAutofilled ? 'ring-2 ring-purple-300 bg-purple-50' : ''}`}
                         placeholder="e.g. John Doe / Skyline Architects"
                         value={customer.customerName}
                         onChange={(e) => onChange('customerName', e.target.value)}
@@ -64,32 +106,68 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
                 </div>
 
 
-                <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Phone Number</label>
-                    <textarea
-                        className="input-field-warm w-full resize-y"
-                        rows={1}
+                <div className="flex flex-col gap-1 relative" style={{ zIndex: 50 }}>
+                    <div className="flex justify-between items-center">
+                        <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Phone Number</label>
+                        {customer.phone && history.some(h => h.phone === customer.phone) && !aiAutofilled && (
+                            <span className="text-[9px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm">
+                                <Database size={10} /> Saved Client
+                            </span>
+                        )}
+                    </div>
+                    <input
+                        type="text"
+                        className={`input-field-warm w-full pl-3 ${showSuggestions ? 'ring-2 ring-purple-300' : ''}`}
                         placeholder="+91 XXXXX XXXXX"
                         value={customer.phone}
-                        onChange={(e) => onChange('phone', e.target.value)}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        onFocus={() => setShowSuggestions(true)}
+                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     />
+
+                    {showSuggestions && customer.phone.length > 2 && filteredHistory.length > 0 && (
+                        <div className="absolute top-full left-0 right-0 mt-1 rounded-lg overflow-y-auto w-full" style={{ minWidth: '100%', maxHeight: '12rem', zIndex: 9999, backgroundColor: 'rgba(255, 255, 255, 0.98)', backdropFilter: 'blur(16px)', boxShadow: '0 10px 40px -10px rgba(0,0,0,0.3)', border: '1px solid #e9d5ff' }}>
+                            <div className="p-2 text-[10px] font-bold uppercase flex items-center gap-1" style={{ backgroundColor: 'rgba(250, 245, 255, 0.95)', color: '#7e22ce', borderBottom: '1px solid #e9d5ff' }}>
+                                <Sparkles size={10} /> TEJASKP AI Client Suggestions
+                            </div>
+                            {filteredHistory.map((h, i) => (
+                                <div
+                                    key={i}
+                                    className="p-3 cursor-pointer flex flex-col transition-colors duration-200"
+                                    style={{ borderBottom: '1px solid #f3f4f6', backgroundColor: 'rgba(255, 255, 255, 0.9)' }}
+                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#faf5ff'}
+                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)'}
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        handleSelectCustomer(h);
+                                    }}
+                                >
+                                    <div className="font-bold text-sm" style={{ color: '#0071e3' }}>{h.phone}</div>
+                                    <div className="text-xs truncate flex items-center justify-between mt-1">
+                                        <span className="font-medium" style={{ color: '#374151' }}>{h.customerName}</span>
+                                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm" style={{ backgroundColor: '#f3e8ff', color: '#7e22ce' }}>Auto-fill</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 relative" style={{ zIndex: 10 }}>
                     <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Email Address</label>
-                    <textarea
-                        className="input-field-warm w-full resize-y"
-                        rows={1}
+                    <input
+                        type="email"
+                        className={`input-field-warm w-full transition-all duration-300 ${aiAutofilled ? 'ring-2 ring-purple-300 bg-purple-50' : ''}`}
                         placeholder="client@example.com"
                         value={customer.email}
                         onChange={(e) => onChange('email', e.target.value)}
                     />
                 </div>
 
-                <div className="md:col-span-2 flex flex-col gap-1">
+                <div className="md:col-span-2 flex flex-col gap-1 relative" style={{ zIndex: 5 }}>
                     <label className="text-[10px] font-bold text-muted uppercase tracking-wider ml-1">Project Site / Address</label>
                     <textarea
-                        className="input-field-warm w-full resize-y"
+                        className={`input-field-warm w-full resize-y transition-all duration-300 ${aiAutofilled ? 'ring-2 ring-purple-300 bg-purple-50' : ''}`}
                         rows={1}
                         placeholder="Enter full site address..."
                         value={customer.address}

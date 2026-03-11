@@ -134,7 +134,9 @@ export const saveQuotation = async (quotation: SavedQuotation) => {
                     customer: quotation.customer,
                     products: quotation.products,
                     totals: quotation.totals,
-                    createdAt: quotation.createdAt
+                    createdAt: quotation.createdAt,
+                    preparedBy: quotation.preparedBy,
+                    status: quotation.status || 'CREATED'
                 });
             if (error) throw error;
         } catch (e) {
@@ -167,7 +169,9 @@ export const syncQuotationsFromCloud = async (): Promise<SavedQuotation[]> => {
                 discountMode: item.discountMode,
                 commonDiscountPercentage: item.commonDiscountPercentage,
                 globalDiscountAmount: item.globalDiscountAmount,
-                totals: item.totals
+                totals: item.totals,
+                preparedBy: item.preparedBy,
+                status: item.status || 'CREATED'
             }));
 
             localStorage.setItem(STORAGE_KEYS.SAVED_QUOTATIONS, JSON.stringify(formatted));
@@ -209,8 +213,28 @@ export const deleteHistoricalQuotations = async (phone: string) => {
                 .delete()
                 .filter('customer->>phone', 'eq', phone);
             if (error) throw error;
+        } catch (error) {
+            console.error("Historical Deletion Failed:", error);
+        }
+    }
+};
+
+export const updateQuotationStatus = async (id: string, status: 'CREATED' | 'PREPARED' | 'FINALIZED') => {
+    let saved = getSavedQuotations();
+    const index = saved.findIndex(q => q.id === id);
+    if (index === -1) return;
+
+    saved[index] = { ...saved[index], status };
+    localStorage.setItem(STORAGE_KEYS.SAVED_QUOTATIONS, JSON.stringify(saved));
+
+    if (supabase) {
+        try {
+            await supabase
+                .from('quotations')
+                .update({ status })
+                .eq('id', id);
         } catch (e) {
-            console.error("Cloud Historical Delete Failed:", e);
+            console.error("Supabase Status Update Failed:", e);
         }
     }
 };

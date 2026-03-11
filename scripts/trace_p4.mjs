@@ -2,120 +2,71 @@ import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
+import { createCanvas, ImageData } from '@napi-rs/canvas';
 
 const workerPath = pathToFileURL(path.join(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs')).href;
 pdfjs.GlobalWorkerOptions.workerSrc = workerPath;
 
-const PDF_PATH = './public/Aquant Price List Vol. 14 Feb. 2025 - Low Res Searchable.pdf';
+const PDF_PATH = './public/Aquant Price List Vol 15. Feb 2026_Searchable.pdf';
 
-const trace = async () => {
+const extractPage = async () => {
     const dataBuffer = new Uint8Array(fs.readFileSync(PDF_PATH));
     const loadingTask = pdfjs.getDocument({ data: dataBuffer });
     const doc = await loadingTask.promise;
-
-    // Page 4 only
     const page = await doc.getPage(4);
-    const textContent = await page.getTextContent();
-    let rawItems = textContent.items.map(it => ({
-        str: it.str.replace(/\u0000/g, ' ').trim(),
-        x: it.transform[4],
-        y: it.transform[5]
-    })).filter(it => it.str.length > 0);
+    const opList = await page.getOperatorList();
 
-    let linesMap = new Map();
-    for (let item of rawItems) {
-        let key = Math.round(item.y);
-        let matchedKey = Array.from(linesMap.keys()).find(k => Math.abs(k - key) <= 3);
-        if (matchedKey !== undefined) {
-            linesMap.get(matchedKey).push(item);
-        } else {
-            linesMap.set(key, [item]);
-        }
+    let transformStack = [[1, 0, 0, 1, 0, 0]];
+    let currentTransform = [1, 0, 0, 1, 0, 0];
+    let imgIdx = 0;
+
+    const multiply = (m1, m2) => [
+        m1[0] * m2[0] + m1[1] * m2[2], m1[0] * m2[1] + m1[1] * m2[3],
+        m1[2] * m2[0] + m1[3] * m2[2], m1[2] * m2[1] + m1[3] * m2[3],
+        m1[4] * m2[0] + m1[5] * m2[2] + m2[4], m1[4] * m2[1] + m1[5] * m2[3] + m2[5]
+    ];
+
+    const outDir = './public/catalog/debug_p4';
+    if (!fs.existsSync(outDir)) {
+        fs.mkdirSync(outDir, { recursive: true });
     }
 
-    let mergedItems = [];
-    for (let [y, itemsOnLine] of linesMap.entries()) {
-        itemsOnLine.sort((a, b) => a.x - b.x);
-        let merged = [];
-        let current = null;
-        for (let item of itemsOnLine) {
-            if (!current) {
-                current = { ...item, text: item.str };
-            } else if (item.x - (current.x + current.text.length * 3) < 40) {
-                current.text += ' ' + item.str;
-            } else {
-                merged.push(current);
-                current = { ...item, text: item.str };
+    for (let i = 0; i < opList.fnArray.length; i++) {
+        const fn = opList.fnArray[i];
+        const args = opList.argsArray[i];
+
+        if (fn === pdfjs.OPS.save) transformStack.push([...currentTransform]);
+        else if (fn === pdfjs.OPS.restore) currentTransform = transformStack.pop();
+        else if (fn === pdfjs.OPS.transform) currentTransform = multiply(currentTransform, args);
+        else if (fn === pdfjs.OPS.paintImageXObject || fn === pdfjs.OPS.paintInlineImageXObject) {
+            const w = Math.abs(currentTransform[0]);
+            const h = Math.abs(currentTransform[3]);
+            if (w > 15 && h > 15) {
+                try {
+                    const imgData = await page.objs.get(args[0]);
+                    if (!imgData || !imgData.data) continue;
+
+                    const canvas = createCanvas(imgData.width, imgData.height);
+                    const ctx = canvas.getContext('2d');
+
+                    let rgba = new Uint8ClampedArray(imgData.width * imgData.height * 4);
+                    const numPixels = imgData.width * imgData.height;
+
+                    if (imgData.data.length === numPixels * 3) {
+                        for (let p = 0, d = 0; p < imgData.data.length; p += 3, d += 4) {
+                            rgba[d] = imgData.data[p]; rgba[d + 1] = imgData.data[p + 1]; rgba[d + 2] = imgData.data[p + 2]; rgba[d + 3] = 255;
+                        }
+                    } else if (imgData.data.length === numPixels * 4) {
+                        rgba = new Uint8ClampedArray(imgData.data.buffer);
+                    } else continue;
+
+                    ctx.putImageData(new ImageData(rgba, imgData.width, imgData.height), 0, 0);
+                    fs.writeFileSync(`${outDir}/img_${imgIdx}_x${Math.round(currentTransform[4])}_y${Math.round(currentTransform[5])}.jpg`, canvas.toBuffer('image/jpeg'));
+                    imgIdx++;
+                } catch (e) { }
             }
         }
-        if (current) merged.push(current);
-        mergedItems.push(...merged);
     }
-
-    let columns = {};
-    for (let item of mergedItems) {
-        let placed = false;
-        for (let colKey in columns) {
-            if (Math.abs(parseFloat(colKey) - item.x) < 80) {
-                columns[colKey].push(item);
-                placed = true;
-                break;
-            }
-        }
-        if (!placed) columns[item.x.toString()] = [item];
-    }
-
-    let products = [];
-    for (let colKey in columns) {
-        let colItems = columns[colKey];
-        colItems.sort((a, b) => b.y - a.y);
-        let currentProduct = null;
-
-        for (let j = 0; j < colItems.length; j++) {
-            let text = colItems[j].text;
-            const codeNameMatch = text.match(/^([a-zA-Z0-9]+(?:\s[a-zA-Z0-9]+)?)\s*-\s*(.+)$/);
-
-            if (codeNameMatch && codeNameMatch[1].length <= 10 && !text.includes('Volume')) {
-                if (currentProduct && currentProduct.productCode === '9272') {
-                    console.log("PUSHING 9272:", currentProduct);
-                }
-                if (codeNameMatch[1].trim() === '9272') {
-                    console.log("FOUND 9272 ROOT!");
-                }
-
-                if (currentProduct && currentProduct.productCode && currentProduct.rate > 0) {
-                    products.push(currentProduct);
-                }
-                currentProduct = {
-                    productCode: codeNameMatch[1].trim(),
-                    productName: codeNameMatch[2].trim(),
-                    rate: 0, size: '', color: ''
-                };
-            } else if (currentProduct) {
-                if (currentProduct.productCode === '9272') console.log(`9272 line: ${text}`);
-                if (text.toLowerCase().startsWith('size') || text.toLowerCase().includes('mm')) {
-                    const parts = text.split(':');
-                    currentProduct.size = parts.length > 1 ? parts[1].trim() : text.trim();
-                } else if (text.toLowerCase().includes('mrp')) {
-                    const rpPart = text.replace(/[^0-9]/g, '');
-                    if (rpPart) currentProduct.rate = parseInt(rpPart, 10);
-                } else if (currentProduct.rate > 0 && !currentProduct.color && text.length < 40 && !text.match(/^[0-9]+$/)) {
-                    if (!text.toLowerCase().includes('mrp') && !text.toLowerCase().includes('size')) {
-                        currentProduct.color = text.trim();
-                        if (currentProduct.productCode === '9272') console.log("COLOR SET 9272:", currentProduct.color);
-                        products.push({ ...currentProduct });
-                        currentProduct = null;
-                    }
-                }
-            }
-        }
-        if (currentProduct && currentProduct.productCode === '9272') {
-            console.log("END OF COL 9272:", currentProduct);
-            products.push({ ...currentProduct });
-        }
-    }
-    console.log("Total Products:", products.length);
-    console.log("Products Array:", JSON.stringify(products, null, 2));
+    console.log(`Saved ${imgIdx} images.`);
 };
-
-trace().catch(console.error);
+extractPage().catch(console.error);

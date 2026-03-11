@@ -114,7 +114,8 @@ function App() {
         discountMode,
         commonDiscountPercentage,
         globalDiscountAmount,
-        totals
+        totals,
+        preparedBy
       });
     }
   };
@@ -215,6 +216,7 @@ function App() {
                 setGlobalDiscountAmount(quote.globalDiscountAmount || 0);
                 setCurrentQuoteNumber(quote.quoteNumber);
                 setCurrentQuoteId(quote.id);
+                if (quote.preparedBy) setPreparedBy(quote.preparedBy);
                 setCurrentView('NEW_QUOTE');
               }}
             />

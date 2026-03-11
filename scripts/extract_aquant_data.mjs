@@ -59,17 +59,32 @@ const extractData = async () => {
         // First Pass on Page: Discover descriptions for base codes
         for (let codeItem of codes) {
             let code = codeItem.str;
+            // For combo products (with +), use the full string as baseCode to avoid incorrect groupings
             const baseCodeMatch = code.match(/^(\d{4})/);
-            const baseCode = baseCodeMatch ? baseCodeMatch[1] : null;
+            let baseCode = baseCodeMatch ? baseCodeMatch[1] : code;
+            if (code.includes('+')) baseCode = code.split(' ')[0] + '_combo';
             if (!baseCode) continue;
 
-            let relatedItems = items.filter(it => {
-                const searchYSpread = 40;
-                return it.y <= codeItem.y + 4 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 30) && it.x < (codeItem.x + 100);
+            let nameItems = items.filter(it => {
+                const searchYSpreadLower = 40;
+                const searchYSpreadUpper = 10;
+                const isWithinY = it.y <= (codeItem.y + searchYSpreadUpper) && it.y > (codeItem.y - searchYSpreadLower);
+                const isWithinX = it.x >= (codeItem.x - 40) && it.x < (codeItem.x + 100);
+                if (!isWithinY || !isWithinX) return false;
+                const otherCodesInBetween = codes.filter(c => 
+                    c.str !== codeItem.str && c.x >= (codeItem.x - 40) && c.x < (codeItem.x + 100) &&
+                    ((c.y < codeItem.y && c.y > it.y) || (c.y > codeItem.y && c.y < it.y))
+                );
+                return otherCodesInBetween.length === 0;
             });
-            relatedItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);
-            let blob = relatedItems.map(it => it.str).join(' ');
-            let name = blob.split(/\bMRP\b|\bSize\b|●/i)[0].trim();
+            let priceItems = nameItems.filter(it => it.y <= codeItem.y + 4); 
+            
+            nameItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);
+            let nameBlob = nameItems.filter(it => !codes.find(c => c.str === it.str && c !== codeItem)).map(it => it.str).join(' ');
+            let priceBlob = priceItems.filter(it => !codes.find(c => c.str === it.str && c !== codeItem)).map(it => it.str).join(' ');
+            
+            let name = nameBlob.split(/\bMRP\b|\bSize\b|●/i)[0].trim();
+            name = name.replace(/ARTISTIC WASH BASINS IN UNIQUE MATERIALS|Micro-Concrete Pedestal|Micro-Concrete Plate/gi, '').trim();
             // Clean up name: remove the product code and any color variant codes (e.g. 4041 BRG)
             // Use word boundaries \b to avoid partial word matching (e.g. Brass -> Bra)
             name = name.replace(/\b\d{4}\s+[A-Z]{2,3}\b/g, '').trim();
@@ -89,8 +104,8 @@ const extractData = async () => {
 
             if (name.length > 2) { // Minimal valid name
                 if (!baseDescriptions.has(baseCode) || name.length > baseDescriptions.get(baseCode).name.length) {
-                    let mrpMatch = blob.match(/MRP\s*[:\s]*`?\s*([0-9,]+)/i);
-                    let sizeMatch = blob.match(/Size\s*[:\s]*([^●?]+?)(?=\s*MRP|\s*●|$)/i);
+                    let mrpMatch = priceBlob.match(/MRP\s*[:\s]*`?\s*([0-9,]+)/i);
+                    let sizeMatch = nameBlob.match(/Size\s*[:\s]*([^●?]+?)(?=\s*MRP|\s*●|$)/i);
                     baseDescriptions.set(baseCode, { name, size: sizeMatch ? sizeMatch[1].trim() : "", rate: mrpMatch ? parseInt(mrpMatch[1].replace(/,/g, ''), 10) : 0 });
                 }
             }
@@ -108,19 +123,53 @@ const extractData = async () => {
             }
 
             const baseCodeMatch = code.match(/^(\d{4})/);
-            const baseCode = baseCodeMatch ? baseCodeMatch[1] : null;
+            let baseCode = baseCodeMatch ? baseCodeMatch[1] : code;
+            if (code.includes('+')) baseCode = code.split(' ')[0] + '_combo';
 
-            let relatedItems = items.filter(it => {
-                const searchYSpread = 40;
-                return it.y <= codeItem.y + 4 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 30) && it.x < (codeItem.x + 100);
+            let nameItems = items.filter(it => {
+                const searchYSpreadLower = 100;
+                const searchYSpreadUpper = 40;
+                const isWithinY = it.y <= (codeItem.y + searchYSpreadUpper) && it.y > (codeItem.y - searchYSpreadLower);
+                const isWithinX = it.x >= (codeItem.x - 40) && it.x < (codeItem.x + (code.includes('+') ? 140 : 100));
+                if (!isWithinY || !isWithinX) return false;
+                
+                const otherCodesInBetween = codes.filter(c => 
+                    c.str !== codeItem.str && c.x >= (codeItem.x - 40) && c.x < (codeItem.x + (code.includes('+') ? 140 : 100)) &&
+                    ((c.y < codeItem.y && c.y > it.y) || (c.y > codeItem.y && c.y < it.y))
+                );
+                return otherCodesInBetween.length === 0;
             });
+            let priceItems = nameItems.filter(it => it.y <= codeItem.y + 4);
 
-            relatedItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);
-            let blob = relatedItems.map(it => it.str).join(' ');
+            nameItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);
+            let nameBlob = nameItems.filter(it => !codes.find(c => c.str === it.str && c !== codeItem)).map(it => it.str).join(' ');
+            let priceBlob = priceItems.filter(it => !codes.find(c => c.str === it.str && c !== codeItem)).map(it => it.str).join(' ');
 
-            let mrpMatch = blob.match(/\bMRP\b\s*[:\s]*`?\s*([0-9,]+)/i);
-            let sizeMatch = blob.match(/\bSize\b\s*[:\s]*([^●?]+?)(?=\s*MRP|\s*●|$)/i);
-            let name = blob.split(/\bMRP\b|\bSize\b|●/i)[0].trim();
+            let mrpMatch = priceBlob.match(/\bMRP\b\s*[:\s]*`?\s*([0-9,]+)/i);
+            let sizeMatch = nameBlob.match(/\bSize\b\s*[:\s]*([^●?]+?)(?=\s*MRP|\s*●|$)/i);
+            let name = nameBlob.split(/\bMRP\b|\bSize\b|●/i)[0].trim();
+            name = name.replace(/ARTISTIC WASH BASINS IN UNIQUE MATERIALS|Micro-Concrete Pedestal|Micro-Concrete Plate/gi, '').trim();
+            // Clean up name: remove the product code and any color variant codes (e.g. 4041 BRG)
+            // Use word boundaries \b to avoid partial word matching (e.g. Brass -> Bra)
+            name = name.replace(/\b\d{4}\s+[A-Z]{2,3}\b/g, '').trim();
+            name = name.replace(/\b\d{4}\b/g, '').trim();
+
+            const colorPatterns = Object.entries(colorMap).flatMap(([k, v]) => [k, v]);
+            // Sort patterns by length descending to match longer phrases first
+            colorPatterns.sort((a, b) => b.length - a.length);
+
+            for (const pattern of colorPatterns) {
+                // Use word boundaries and only replace once or twice if needed, but carefully
+                const pRegex = new RegExp('\\b(' + pattern.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')\\b', 'gi');
+                name = name.replace(pRegex, '').trim();
+            }
+            name = name.replace(/^[- ]+/, '').replace(/[- ]+$/, '').trim();
+            name = name.replace(/\s+/g, ' ');
+
+            // Remove page headers/footers that might bleed into the name
+            name = name.replace(/Vol\s*\d+\s*\|\s*Page\s*\d+/gi, '').trim();
+            name = name.replace(/Aquant\s*Price\s*List/gi, '').trim();
+
 
             if (mrpMatch || baseDescriptions.has(baseCode)) {
                 const rate = mrpMatch ? parseInt(mrpMatch[1].replace(/,/g, ''), 10) : (baseDescriptions.get(baseCode)?.rate || 0);
@@ -128,9 +177,9 @@ const extractData = async () => {
 
                 let color = inlineColor;
                 if (!color) {
-                    const mrpIndex = blob.search(/MRP/i);
+                    const mrpIndex = nameBlob.search(/MRP/i);
                     if (mrpIndex !== -1) {
-                        const afterMrp = blob.substring(mrpIndex).replace(/MRP\s*[:\s]*`?\s*[0-9,/-]+/i, '').trim();
+                        const afterMrp = nameBlob.substring(mrpIndex).replace(/MRP\s*[:\s]*`?\s*[0-9,/-]+/i, '').trim();
                         color = afterMrp.split(' ')[0] + (afterMrp.split(' ')[1] ? " " + afterMrp.split(' ')[1] : "");
                         if (color.match(/[0-9]/)) color = "";
                     }

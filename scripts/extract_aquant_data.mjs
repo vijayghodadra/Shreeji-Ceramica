@@ -50,6 +50,7 @@ const extractData = async () => {
                 const s = it.str;
                 if (s.includes('Vol') || s.includes('Page') || s.includes('Size') || s.includes('MRP')) return false;
                 if (s.match(/[0-9]{3} x [0-9]{3}/)) return false;
+                if (s.match(/mm/i) || s.match(/\/\-/)) return false;
                 if (s.length > 50) return false;
                 if (s.match(/^[0-9]+$/) && s.length < 3) return false;
                 return true;
@@ -64,7 +65,7 @@ const extractData = async () => {
 
             let relatedItems = items.filter(it => {
                 const searchYSpread = 300;
-                return it.y <= codeItem.y + 5 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 250) && it.x < (codeItem.x + 300);
+                return it.y <= codeItem.y + 10 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 30) && it.x < (codeItem.x + 160);
             });
             relatedItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);
             let blob = relatedItems.map(it => it.str).join(' ');
@@ -111,7 +112,7 @@ const extractData = async () => {
 
             let relatedItems = items.filter(it => {
                 const searchYSpread = 300;
-                return it.y <= codeItem.y + 5 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 250) && it.x < (codeItem.x + 300);
+                return it.y <= codeItem.y + 10 && it.y > (codeItem.y - searchYSpread) && it.x >= (codeItem.x - 30) && it.x < (codeItem.x + 160);
             });
 
             relatedItems.sort((a, b) => b.y !== a.y ? b.y - a.y : a.x - b.x);

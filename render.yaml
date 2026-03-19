@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: shreeji-ceramica
+    runtime: static
+    buildCommand: npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 20

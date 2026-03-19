@@ -19,6 +19,7 @@ export default defineConfig({
     }
   },
   server: {
+    allowedHosts: true,
     proxy: {
       '/quotations': {
         target: 'https://xmtprcnmslamfzjnuejc.supabase.co',
@@ -26,5 +27,8 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/quotations/, '/storage/v1/object/public/quotations')
       }
     }
+  },
+  preview: {
+    allowedHosts: true
   }
 })

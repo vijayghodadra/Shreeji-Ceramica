@@ -8,8 +8,8 @@
     "search-engine": "python scripts/faiss_engine.py",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
-
+    "preview": "vite preview",
+    "start": "vite preview --host 0.0.0.0 --port $PORT"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

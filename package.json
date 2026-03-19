@@ -5,12 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "search-engine": "python scripts/faiss_engine.py",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
+
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.97.0",
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.99.1",
+    "canvas": "^3.2.1",
+    "dotenv": "^17.3.1",
     "jimp": "^1.6.0",
     "jspdf": "^4.2.0",
     "jspdf-autotable": "^5.0.7",

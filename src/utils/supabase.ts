@@ -39,3 +39,33 @@ export const uploadPDF = async (blob: Blob, fileName: string): Promise<string | 
         return null;
     }
 };
+
+/**
+ * Performs a semantic search for products using local FAISS engine
+ */
+export const semanticSearch = async (query: string, brand: string): Promise<any[]> => {
+    if (query.length < 3) return [];
+
+    try {
+        const response = await fetch(`http://localhost:5001/search?q=${encodeURIComponent(query)}&brand=${brand.toUpperCase()}`);
+        if (!response.ok) throw new Error("Local Search Engine not responding");
+        
+        const data = await response.json();
+        return data.map((item: any) => ({
+             productCode: item.productCode,
+             productName: item.productName,
+             rate: item.rate,
+             image: item.image,
+             size: item.size,
+             color: item.color,
+             similarity: item.similarity
+        }));
+    } catch (err) {
+        console.error('Local Search Engine Error:', err);
+        // Fallback or retry logic could go here
+        return [];
+    }
+};
+
+
+

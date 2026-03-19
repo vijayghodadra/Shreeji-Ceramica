@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import type { ProductDetails } from '../types';
 import { calculateProductTotals, formatCurrency } from '../utils/calculations';
 import { getProductHistory, saveProductToHistory } from '../utils/storage';
-import { Plus, Trash2, Box, Info, Search, Database } from 'lucide-react';
+import { Plus, Trash2, Box, Info, Search, Database, Sparkles } from 'lucide-react';
+import { semanticSearch } from '../utils/supabase';
+
 import kohlerCatalog from '../data/products.json';
 import aquantCatalog from '../data/aquant_products.json';
 
@@ -62,10 +64,37 @@ export const ProductTable: React.FC<ProductTableProps> = ({
     const [activeRowId, setActiveRowId] = useState<string | null>(null);
     const [globalSearch, setGlobalSearch] = useState('');
     const [showGlobalSuggestions, setShowGlobalSuggestions] = useState(false);
+    const [semanticResults, setSemanticResults] = useState<any[]>([]);
+    const [isSearchingAI, setIsSearchingAI] = useState(false);
+
 
     useEffect(() => {
         setHistory(getProductHistory());
     }, []);
+
+    // Debounced Semantic Search Effect
+    useEffect(() => {
+        if (!globalSearch || globalSearch.length < 3) {
+            setSemanticResults([]);
+            setIsSearchingAI(false);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setIsSearchingAI(true);
+            try {
+                const results = await semanticSearch(globalSearch, activeBrand);
+                setSemanticResults(results);
+            } catch (err) {
+                console.error("AI Search failed:", err);
+            } finally {
+                setIsSearchingAI(false);
+            }
+        }, 800); // 800ms debounce
+
+        return () => clearTimeout(timer);
+    }, [globalSearch, activeBrand]);
+
 
     const addProduct = () => {
         const newProduct: ProductDetails = {
@@ -180,15 +209,29 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             placeholder={`Quick Search & Add ${activeBrand === 'KOHLER' ? 'Kohler' : 'Aquant'} Product...`}
                             value={globalSearch}
                             onChange={(e) => {
-                                setGlobalSearch(e.target.value);
+                                const val = e.target.value;
+                                setGlobalSearch(val);
                                 setShowGlobalSuggestions(true);
+                                
+                                // Debounced Semantic Search is handled by useEffect
+                                if (val.length > 2) {
+                                    setIsSearchingAI(true);
+                                } else {
+                                    setSemanticResults([]);
+                                }
+
                             }}
                             onFocus={() => setShowGlobalSuggestions(true)}
+
                             onBlur={() => setTimeout(() => setShowGlobalSuggestions(false), 200)}
                         />
                     </div>
                                         {showGlobalSuggestions && (globalSearch.length > 1) && (
-                        <div className="suggestions-dropdown glass-premium" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                        <div 
+                            className="suggestions-dropdown glass-premium" 
+                            style={{ maxHeight: '60vh', overflowY: 'auto' }}
+                            onMouseDown={(e) => e.preventDefault()}
+                        >
                             {(() => {
                                 const renderProductItem = (c: any, keyMap: string) => (
                                     <div
@@ -225,17 +268,20 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                         }}
                                     >
                                         <div className="suggestion-img-wrapper">
-                                            {c.image ? (
-                                                <img src={c.image} alt={c.productCode} />
-                                            ) : (
-                                                <Database size={24} className="text-muted opacity-20" />
-                                            )}
+                                            <img 
+                                                src={c.image || "/catalog/aquant_images/placeholder.jpg"} 
+                                                alt={c.productCode} 
+                                                onError={(e) => { e.currentTarget.src = "/catalog/aquant_images/placeholder.jpg"; }}
+                                            />
                                         </div>
+
                                         <div className="suggestion-info">
                                             <div className="suggestion-header">
                                                 <span className="suggestion-code">{c.productCode}</span>
+                                                <span className="text-[9px] px-1 bg-gray-100 rounded text-muted font-bold ml-2">{c.brand || activeBrand}</span>
                                                 <span className="suggestion-price">{formatCurrency(c.rate)}</span>
                                             </div>
+
                                             <div className="suggestion-name">{c.productName}</div>
                                             {(c.size || c.color) && (
                                                 <div className="suggestion-meta">
@@ -248,28 +294,71 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     </div>
                                 );
 
+                                // 1. COLLATE RESULTS
                                 const isKohler = activeBrand === 'KOHLER';
                                 const mainCatalog = isKohler ? kohlerCatalog : aquantCatalog;
                                 const inactiveBrandStr = isKohler ? 'AQUANT' : 'KOHLER';
                                 const inactiveCatalog = isKohler ? aquantCatalog : kohlerCatalog;
-                                
                                 const searchLower = globalSearch.toLowerCase().trim();
-                                
-                                // First check for EXACT code match
-                                const exactMatch = mainCatalog.find(c => c.productCode?.toLowerCase().trim() === searchLower);
-                                
-                                if (exactMatch) {
-                                    return (
-                                        <div>
+                                const searchNorm = searchLower.replace(/[^a-z0-9]/g, '');
+
+                                // Check for exact matches in local catalog first (instant)
+                                const localExact = mainCatalog.find(c => {
+                                    const code = (c.productCode || '').toLowerCase().trim();
+                                    return code === searchLower || code.replace(/[^a-z0-9]/g, '') === searchNorm;
+                                });
+
+                                // Check inactive catalog for cross-exact match
+                                const inactiveExactMatch = inactiveCatalog.find(c => {
+                                    const code = (c.productCode || '').toLowerCase().trim();
+                                    return code === searchLower || code.replace(/[^a-z0-9]/g, '') === searchNorm;
+                                });
+
+                                // 2. COLLECT RESULTS
+                                const results = [];
+
+                                // ALWAYS show local exact first
+                                if (localExact) {
+                                    results.push(
+                                        <div key="exact-match-group">
                                             <div className="p-2 bg-green-50 text-[10px] font-bold text-green-700 uppercase flex items-center gap-1 border-b border-green-100">
-                                                <Box size={10} /> Exact Model Match
+                                                <Sparkles size={10} className="text-secondary" /> EXACT MODEL MATCH FOUND
                                             </div>
-                                            {renderProductItem(exactMatch, 'exact-1')}
+                                            {renderProductItem(localExact, 'exact-match')}
+                                        </div>
+                                    );
+                                } else if (inactiveExactMatch) {
+                                    // If no local exact but exists in other catalog, show it PROMINTENTLY!
+                                    results.push(
+                                        <div key="cross-exact-match-group">
+                                            <div className="p-2 bg-blue-50 text-[10px] font-bold text-blue-700 uppercase flex items-center gap-1 border-b border-blue-100">
+                                                <Search size={10} className="text-primary" /> EXACT {inactiveBrandStr} MODEL MATCH
+                                            </div>
+                                            {renderProductItem(inactiveExactMatch, 'cross-exact-1')}
                                         </div>
                                     );
                                 }
 
-                                // If no exact match, proceed with category mapping
+                                // 3. AI Suggestions (interleaved)
+                                if (semanticResults.length > 0) {
+                                    const filteredAI = semanticResults.filter(s => 
+                                        (!localExact || s.productCode !== localExact.productCode) && 
+                                        (!inactiveExactMatch || s.productCode !== inactiveExactMatch.productCode)
+                                    ).slice(0, 5);
+
+                                    if (filteredAI.length > 0) {
+                                        results.push(
+                                            <div key="semantic-group" className="mt-2">
+                                                <div className="p-2 bg-purple-50 text-[10px] font-bold text-purple-700 uppercase flex items-center gap-1 border-b border-purple-100">
+                                                    <Sparkles size={10} /> AI POWERED SUGGESTIONS
+                                                </div>
+                                                {filteredAI.map((c: any, i) => renderProductItem(c, `semantic-${i}`))}
+                                            </div>
+                                        );
+                                    }
+                                }
+
+                                // 4. Local Category Filtering
                                 const cats = isKohler ? [
                                     { title: 'Smart Toilets & Bidets', keywords: ['Toilet', 'Bidet', 'Cleansing', 'PureWash', 'C3-', 'Veil', 'Innate', 'Leap'] },
                                     { title: 'Faucets & Fittings', keywords: ['Faucet', 'Tap', 'Mixer', 'Handle', 'Spout'] },
@@ -283,8 +372,11 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     { title: 'Other Products', keywords: [] }
                                 ];
 
-                                const mainResults = cats.map((cat, catIdx) => {
+                                const categoryResults = cats.map((cat, catIdx) => {
                                     const filtered = mainCatalog.filter(c => {
+                                        if (localExact && c.productCode === localExact.productCode) return false;
+                                        if (inactiveExactMatch && c.productCode === inactiveExactMatch.productCode) return false;
+                                        
                                         const matchesSearch = matchesProductSearch(c, globalSearch);
                                         if (!matchesSearch) return false;
 
@@ -305,7 +397,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                         if (aPrefix && !bPrefix) return -1;
                                         if (!aPrefix && bPrefix) return 1;
                                         return 0;
-                                    }).slice(0, 15);
+                                    }).slice(0, 10);
 
                                     if (filtered.length === 0) return null;
 
@@ -319,21 +411,13 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     );
                                 });
 
-                                // Check inactive catalog
-                                const inactiveExactMatch = inactiveCatalog.find(c => c.productCode?.toLowerCase().trim() === searchLower);
-                                let inactiveResults = null;
+                                const hasLocalPartial = categoryResults.some(r => r !== null);
+                                if (hasLocalPartial) results.push(...categoryResults);
 
-                                if (inactiveExactMatch) {
-                                    inactiveResults = (
-                                        <div key="cross-brand-matches" className="mt-2 border-t border-gray-100">
-                                            <div className="p-2 bg-blue-50 text-[10px] font-bold text-blue-700 uppercase flex items-center gap-1 border-b border-blue-100">
-                                                <Search size={10} /> Exact {inactiveBrandStr} Match
-                                            </div>
-                                            {renderProductItem(inactiveExactMatch, 'cross-exact-1')}
-                                        </div>
-                                    );
-                                } else {
+                                // 5. Cross-brand matches (if nothing found locally besides maybe an exact match)
+                                if (results.length <= 1) { // Up to 1 result (the exact match)
                                     const inactiveMatches = inactiveCatalog.filter(c => {
+                                        if (inactiveExactMatch && c.productCode === inactiveExactMatch.productCode) return false;
                                         return matchesProductSearch(c, globalSearch);
                                     }).sort((a: any, b: any) => {
                                         const aCode = (a.productCode || '').toLowerCase();
@@ -346,10 +430,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     }).slice(0, 15);
 
                                     if (inactiveMatches.length > 0) {
-                                        inactiveResults = (
+                                        results.push(
                                             <div key="cross-brand-matches" className="mt-2 border-t border-gray-100">
                                                 <div className="p-2 bg-blue-50 text-[10px] font-bold text-blue-700 uppercase flex items-center gap-1 border-b border-blue-100">
-                                                    <Search size={10} /> {inactiveBrandStr} Matches
+                                                    <Search size={10} /> Matches in {inactiveBrandStr}
                                                 </div>
                                                 {inactiveMatches.map((c: any, i) => renderProductItem(c, `cross-glob-${i}`))}
                                             </div>
@@ -357,23 +441,25 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     }
                                 }
 
-                                const hasMainResults = mainResults.some(r => r !== null);
-                                
-                                return (
-                                    <>
-                                        {hasMainResults ? mainResults : (
-                                            <div className="p-8 text-center text-muted">
-                                                <Box size={32} className="mx-auto mb-2 opacity-20" />
-                                                <p className="text-sm font-bold">No results in {activeBrand}</p>
-                                                <p className="text-xs">Try searching in another category or using partial names.</p>
-                                            </div>
-                                        )}
-                                        {inactiveResults}
-                                    </>
-                                );
+
+                                // 6. FINAL FALLBACK: If absolutely nothing found
+                                if (results.length === 0) {
+                                    results.push(
+                                        <div key="no-all-results" className="p-8 text-center text-muted">
+                                            <Box size={32} className="mx-auto mb-2 opacity-20" />
+                                            <p className="text-sm font-bold">No results found in any catalog</p>
+                                            <p className="text-xs">Try searching in another category or using partial names.</p>
+                                            {isSearchingAI && <p className="text-secondary animate-pulse mt-2">The AI is still searching deep in the catalog...</p>}
+                                        </div>
+                                    );
+                                }
+
+                                return <>{results}</>;
+
                             })()}
                         </div>
                     )}
+
                </div>
 
                 <button className="btn btn-primary btn-sm flex-shrink-0 w-full md:w-auto justify-center" onClick={addProduct}>

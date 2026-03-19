@@ -1,8 +1,0 @@
-﻿Image img_p20_1 at X=485.6, Y=685.6, W=53.8, H=85.0
-Image img_p20_2 at X=190.6, Y=314.8, W=70.9, H=55.1
-Image img_p20_3 at X=339.9, Y=692.7, W=58.8, H=70.9
-Image img_p20_4 at X=319.7, Y=504.7, W=99.2, H=61.0
-Image img_p20_5 at X=319.7, Y=312.9, W=99.2, H=58.9
-Image img_p20_6 at X=57.1, Y=259.2, W=51.4, H=145.6
-Image img_p20_7 at X=77.3, Y=719.9, W=153.9, H=64.6
-Image img_p20_8 at X=77.3, Y=461.4, W=153.9, H=246.3

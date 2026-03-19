@@ -1,7 +1,0 @@
-﻿Image Data Keys: [ 'width', 'height', 'interpolate', 'kind', 'data', 'dataLen', 'ref' ]
-ImageKind enum: { GRAYSCALE_1BPP: 1, RGB_24BPP: 2, RGBA_32BPP: 3 }
-Kind: 3
-Width: 205 Height: 328
-Data length: 268960
-Bytes/Pixel: 4
-First 12 bytes: 165, 165, 165, 0, 170, 170, 170, 0, 138, 138, 138, 0
